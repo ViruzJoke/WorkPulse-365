@@ -49,12 +49,12 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare } from 'lucide-react';
+        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User } from 'lucide-react';
         import { BarChart, Bar, XAxis, Tooltip as ReTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
         // --- Firebase Imports (Direct from Google CDN for Module) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- Configuration ---
@@ -79,13 +79,29 @@
 
         // --- Components ---
 
-        const Header = () => (
+        const Header = ({ user, onLogout }) => (
             <header className="bg-dhl-yellow p-4 shadow-md sticky top-0 z-50">
                 <div className="max-w-md mx-auto flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <h1 className="text-dhl-red font-black italic text-3xl tracking-tighter transform -skew-x-12">DHL</h1>
                         <span className="text-dhl-red font-bold text-xl ml-2">WorkPulse 365</span>
                     </div>
+                    {user && (
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 mr-1">
+                                {user.photoURL ? (
+                                    <img src={user.photoURL} alt="Profile" className="w-9 h-9 rounded-full border-2 border-white shadow-sm" />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-full bg-white text-dhl-red border-2 border-dhl-red flex items-center justify-center font-bold shadow-sm">
+                                        {user.displayName ? user.displayName[0].toUpperCase() : <User size={18} />}
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={onLogout} className="bg-white/20 text-dhl-red hover:bg-white/40 p-2 rounded-full transition-colors" title="Logout">
+                                <LogOut size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </header>
         );
@@ -853,26 +869,48 @@
             const [logs, setLogs] = useState([]);
             const [activeTab, setActiveTab] = useState('home');
             const [loading, setLoading] = useState(true);
+            const [authLoading, setAuthLoading] = useState(true);
             const [error, setError] = useState('');
+
+            const handleLogin = async () => {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(auth, provider);
+                } catch (e) {
+                    console.error(e);
+                    alert("Login failed: " + e.message);
+                }
+            };
+
+            const handleLogout = () => signOut(auth);
 
             useEffect(() => {
                 if (!auth) {
                     setError("Firebase config missing");
-                    setLoading(false);
+                    setAuthLoading(false);
                     return;
                 }
-                signInAnonymously(auth).catch(e => setError(e.message));
 
-                return onAuthStateChanged(auth, u => {
+                // Auth Listener
+                const unsubscribe = onAuthStateChanged(auth, u => {
+                    setUser(u);
+                    setAuthLoading(false);
+
                     if (u) {
-                        setUser(u);
+                        setLoading(true);
+                        // Query user-specific logs
                         const q = query(collection(db, 'artifacts', 'workpulse-365', 'users', u.uid, 'worklogs'), orderBy('date', 'desc'));
-                        onSnapshot(q, s => {
+                        const unsubLogs = onSnapshot(q, s => {
                             setLogs(s.docs.map(d => ({ id: d.id, ...d.data() })));
                             setLoading(false);
                         });
+                        return () => unsubLogs();
+                    } else {
+                        setLogs([]);
+                        setLoading(false);
                     }
                 });
+                return () => unsubscribe();
             }, []);
 
             const handleAdd = async (data) => {
@@ -891,9 +929,40 @@
                 return logs.filter(l => ['P1', 'P2', 'P3'].includes(l.priority) && l.status !== 'Done').sort((a, b) => a.priority.localeCompare(b.priority));
             }, [logs]);
 
+            if (authLoading) {
+                return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-dhl-red mb-4" size={48} /><p className="text-slate-400 text-sm font-bold animate-pulse">Loading WorkPulse...</p></div>;
+            }
+
+            // Login Screen if no user
+            if (!user) {
+                return (
+                    <div className="min-h-screen bg-slate-100 flex flex-col">
+                        <Header user={null} />
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-8 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-dhl-yellow"></div>
+                                <div className="w-24 h-24 bg-gradient-to-br from-dhl-yellow to-yellow-400 rounded-full mx-auto flex items-center justify-center text-dhl-red shadow-lg transform -rotate-3 hover:rotate-3 transition-transform duration-500">
+                                    <Award size={48} />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">Welcome Back!</h2>
+                                    <p className="text-slate-500 leading-relaxed text-sm">Sign in to track your work, generate reports, and boost productivity with DHL WorkPulse.</p>
+                                </div>
+                                <button onClick={handleLogin} className="w-full bg-white border-2 border-slate-200 hover:border-dhl-red hover:bg-red-50 text-slate-700 font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all group shadow-sm hover:shadow-md">
+                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
+                                    <span className="group-hover:text-dhl-red text-lg">Sign in with Google</span>
+                                </button>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Secure Login via Google</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Main App
             return (
-                <div className="min-h-screen">
-                    <Header />
+                <div className="min-h-screen bg-slate-50">
+                    <Header user={user} onLogout={handleLogout} />
                     <main className="max-w-md mx-auto p-4 pb-32">
                         {loading && <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-dhl-red" /></div>}
                         {!loading && error && (
