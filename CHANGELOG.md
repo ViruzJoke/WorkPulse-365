@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Line OA Integration**: Full integration with Line Official Account using Vercel Serverless Function (`api/send-line.js`) to send beautiful Flex Messages.
+- **Responsive Design**: Upgraded UI to fully support Desktop (Sidebar + Grid Layout) while keeping Mobile-optimized bottom navigation.
+- **Google Authentication**: Replaced Anonymous login with secure Google Sign-In, enabling persistent profiles and syncing across devices.
 - **Task Completion Status**: Added checkmark button to toggle "Done" status. Completed tasks are highlighted green and dim.
 - **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs for better organization.
 - **Home Dashboard Logic**: Automatically hides "Done" tasks from the "Upcoming & Critical" view.
