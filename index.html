@@ -621,12 +621,12 @@
                         </div>
 
                         {/* Filter Chips */}
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                             {APPS.map(app => (
                                 <button
                                     key={app}
                                     onClick={() => setFilterApp(app)}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${filterApp === app
+                                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${filterApp === app
                                         ? 'bg-slate-800 text-white border-slate-800 shadow-md'
                                         : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                                         }`}
@@ -1017,12 +1017,12 @@
                                         {activeTab === 'home' && (
                                             <div className="lg:grid lg:grid-cols-12 gap-8 items-start">
                                                 {/* Left Col: Quick Log */}
-                                                <div className="lg:col-span-5 xl:col-span-4 sticky top-24">
+                                                <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 relative z-20 mb-8 lg:mb-0">
                                                     <QuickLog onAddLog={handleAdd} />
                                                 </div>
 
                                                 {/* Right Col: Timeline/Tasks */}
-                                                <div className="lg:col-span-7 xl:col-span-8 mt-6 lg:mt-0">
+                                                <div className="lg:col-span-7 xl:col-span-8 relative z-10">
                                                     <div className="flex items-center justify-between mb-6">
                                                         <div className="flex items-center gap-3">
                                                             <div className="p-2 bg-red-100 rounded-lg text-dhl-red"><TrendingUp size={20} /></div>
