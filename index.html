@@ -1090,7 +1090,7 @@
             );
         };
 
-        const Settings = () => {
+        const AppSettings = () => {
             // State initialization from localStorage
             const [scriptUrl, setScriptUrl] = useState(localStorage.getItem('workpulse_script_url') || '');
             const [notifyToken, setNotifyToken] = useState(localStorage.getItem('lineNotifyToken') || '');
@@ -1470,7 +1470,7 @@
                                                 <Dashboard logs={logs} />
                                             </>
                                         )}
-                                        {activeTab === 'settings' && <Settings />}
+                                        {activeTab === 'settings' && <AppSettings />}
                                     </div>
                                 )}
                             </main>
