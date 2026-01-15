@@ -49,7 +49,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User } from 'lucide-react';
+        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User, X } from 'lucide-react';
         import { BarChart, Bar, XAxis, Tooltip as ReTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
         // --- Firebase Imports (Direct from Google CDN for Module) ---
@@ -741,7 +741,14 @@
                     // If sorting by Created -> Group by Month
                     let groupKey;
                     if (sortBy === 'updated') {
-                        const d = log.lastUpdateDate ? new Date(log.lastUpdateDate) : new Date(log.date);
+                        let d;
+                        try {
+                            d = log.lastUpdateDate ? new Date(log.lastUpdateDate) : new Date(log.date);
+                            if (isNaN(d.getTime())) throw new Error('Invalid');
+                        } catch (e) {
+                            d = new Date(); // Fallback
+                        }
+
                         // Check if today
                         const today = new Date();
                         if (d.toDateString() === today.toDateString()) {
@@ -750,7 +757,13 @@
                             groupKey = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         }
                     } else {
-                        groupKey = new Date(log.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        try {
+                            const d = new Date(log.date);
+                            if (isNaN(d.getTime())) throw new Error('Invalid');
+                            groupKey = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        } catch (e) {
+                            groupKey = 'Recent / Unsorted';
+                        }
                     }
 
                     if (!groups[groupKey]) groups[groupKey] = [];
@@ -1113,7 +1126,38 @@
                 }
 
                 const unsubLogs = onSnapshot(q, s => {
-                    setLogs(s.docs.map(d => ({ id: d.id, ...d.data() })));
+                    const logsData = s.docs.map(doc => {
+                        const data = doc.data();
+
+                        // Safety Helpers
+                        const convertDate = (val) => {
+                            if (!val) return null;
+                            if (val && typeof val.toDate === 'function') return val.toDate().toISOString();
+                            if (val instanceof Date) return val.toISOString();
+                            return val;
+                        };
+                        const safeString = (str, def = '') => {
+                            if (typeof str === 'string') return str;
+                            if (typeof str === 'number') return String(str);
+                            return def;
+                        };
+
+                        return {
+                            id: doc.id,
+                            ...data,
+                            title: safeString(data.title, 'Untitled'),
+                            category: safeString(data.category, 'General'),
+                            application: safeString(data.application),
+                            priority: safeString(data.priority, 'P3'),
+                            customer: safeString(data.customer),
+                            impact: safeString(data.impact),
+                            // Dates
+                            createdAt: convertDate(data.createdAt),
+                            date: convertDate(data.date) || new Date().toISOString(),
+                            lastUpdateDate: convertDate(data.lastUpdateDate)
+                        };
+                    });
+                    setLogs(logsData);
                     setLoading(false);
                 });
                 return () => unsubLogs();
