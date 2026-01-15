@@ -49,7 +49,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User, X } from 'lucide-react';
+        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User, X, Settings } from 'lucide-react';
         import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
         // --- Firebase Imports (Direct from Google CDN for Module) ---
@@ -88,7 +88,7 @@
 
         // --- Components ---
 
-        const Header = ({ user, onLogout }) => (
+        const Header = ({ user, onLogout, onSettings }) => (
             <header className="bg-dhl-yellow shadow-md sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -110,6 +110,9 @@
                                 )}
                                 <span className="hidden md:block font-bold text-dhl-red text-sm">{user.displayName}</span>
                             </div>
+                            <button onClick={onSettings} className="bg-white/20 text-dhl-red hover:bg-white/40 p-2 rounded-full transition-colors" title="Settings">
+                                <Settings size={18} />
+                            </button>
                             <button onClick={onLogout} className="bg-white/20 text-dhl-red hover:bg-white/40 p-2 rounded-full transition-colors" title="Logout">
                                 <LogOut size={18} />
                             </button>
@@ -188,9 +191,14 @@
 
         const QuickLog = ({ onAddLog }) => {
             const [title, setTitle] = useState('');
-            const [category, setCategory] = useState(Object.keys(CATEGORY_MAPPING)[0]);
-            const [application, setApplication] = useState(CATEGORY_MAPPING[Object.keys(CATEGORY_MAPPING)[0]][0]);
-            const [priority, setPriority] = useState('P3');
+            // Load defaults or fallback
+            const [category, setCategory] = useState(() => localStorage.getItem('default_category') || Object.keys(CATEGORY_MAPPING)[0]);
+            const [application, setApplication] = useState(() => {
+                const startCat = localStorage.getItem('default_category') || Object.keys(CATEGORY_MAPPING)[0];
+                return CATEGORY_MAPPING[startCat] ? CATEGORY_MAPPING[startCat][0] : 'MyDHL+';
+            });
+            const [priority, setPriority] = useState(() => localStorage.getItem('default_priority') || 'P3');
+
             const [customer, setCustomer] = useState('');
             const [targetMonth, setTargetMonth] = useState('');
             const [impact, setImpact] = useState('');
@@ -1082,57 +1090,145 @@
             );
         };
 
-        const Profile = ({ user, onLogout }) => {
-            const [token, setToken] = useState(localStorage.getItem('lineNotifyToken') || '');
+        const Settings = () => {
+            // State initialization from localStorage
+            const [scriptUrl, setScriptUrl] = useState(localStorage.getItem('workpulse_script_url') || '');
+            const [notifyToken, setNotifyToken] = useState(localStorage.getItem('lineNotifyToken') || '');
+            const [defaultPriority, setDefaultPriority] = useState(localStorage.getItem('default_priority') || 'P3');
+            const [defaultCategory, setDefaultCategory] = useState(localStorage.getItem('default_category') || 'Standard');
             const [status, setStatus] = useState('');
 
-            const saveToken = () => {
-                localStorage.setItem('lineNotifyToken', token);
-                setStatus('Saved! ✅');
-                setTimeout(() => setStatus(''), 2000);
+            const handleSave = () => {
+                localStorage.setItem('workpulse_script_url', scriptUrl);
+                localStorage.setItem('lineNotifyToken', notifyToken);
+                localStorage.setItem('default_priority', defaultPriority);
+                localStorage.setItem('default_category', defaultCategory);
+
+                setStatus('Settings Saved Successfully! ✅');
+                setTimeout(() => setStatus(''), 3000);
             };
 
             return (
+                <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-dhl-red text-white rounded-xl shadow-lg">
+                            <Settings size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-800">Application Settings</h2>
+                            <p className="text-slate-500 text-sm">Configure your automation and preferences.</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-dhl-red"></div>
+
+                        {/* Automation Section */}
+                        <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 flex items-center gap-2">
+                            <MessageSquare size={16} /> Automation & Integrations
+                        </h3>
+
+                        <div className="space-y-4 mb-8">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Google Apps Script Web App URL</label>
+                                <input
+                                    type="text"
+                                    value={scriptUrl}
+                                    onChange={e => setScriptUrl(e.target.value)}
+                                    placeholder="https://script.google.com/macros/s/..."
+                                    className="w-full p-3 bg-slate-50 border rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-dhl-red outline-none shadow-inner"
+                                />
+                                <p className="text-[10px] text-slate-400 mt-1">Found in your Google Apps Script Deployment (Web App).</p>
+                            </div>
+
+                            <div className="opacity-75">
+                                <label className="block text-xs font-bold text-slate-500 mb-1">Line Notify Token (Legacy)</label>
+                                <input
+                                    type="password"
+                                    value={notifyToken}
+                                    onChange={e => setNotifyToken(e.target.value)}
+                                    placeholder="Enter Line Notify Token"
+                                    className="w-full p-3 bg-slate-50 border rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-slate-300 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="h-px bg-slate-100 my-6"></div>
+
+                        {/* Preferences Section */}
+                        <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 flex items-center gap-2">
+                            <i className="fa-solid fa-sliders"></i> Default Preferences
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Default Priority</label>
+                                <select
+                                    value={defaultPriority}
+                                    onChange={e => setDefaultPriority(e.target.value)}
+                                    className="w-full p-3 bg-white border rounded-lg text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-dhl-red"
+                                >
+                                    {Object.entries(PRIORITIES).map(([k, v]) => (
+                                        <option key={k} value={k}>{k} - {v.days} Days</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Default Category</label>
+                                <select
+                                    value={defaultCategory}
+                                    onChange={e => setDefaultCategory(e.target.value)}
+                                    className="w-full p-3 bg-white border rounded-lg text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-dhl-red"
+                                >
+                                    {Object.keys(CATEGORY_MAPPING).map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="flex justify-end items-center gap-4">
+                        {status && <span className="text-green-600 font-bold text-sm animate-pulse">{status}</span>}
+                        <button
+                            onClick={handleSave}
+                            className="bg-dhl-red text-white py-3 px-8 rounded-xl font-bold shadow-lg hover:bg-red-700 hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            Save Settings
+                        </button>
+                    </div>
+
+                    <div className="text-center mt-8">
+                        <p className="text-[10px] text-slate-400">WorkPulse 365 v2.1.0 • Built for DHL Express Support Team</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const Profile = ({ user, onLogout }) => {
+            return (
                 <div className="space-y-6 animate-in fade-in">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center">
-                        <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl">👤</div>
-                        <h2 className="text-xl font-bold text-slate-800">User Profile</h2>
-                        <p className="text-slate-500 text-sm">ID: {user?.uid?.slice(0, 6)}...</p>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center relative overflow-hidden">
+                        <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-dhl-yellow to-dhl-red"></div>
+                        <div className="w-24 h-24 bg-slate-50 rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-white shadow-md">
+                            {user.photoURL ?
+                                <img src={user.photoURL} className="w-full h-full rounded-full" /> :
+                                <span className="text-4xl">👤</span>
+                            }
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">{user.displayName}</h2>
+                        <p className="text-slate-500 text-sm font-medium">{user.email}</p>
+                        <div className="mt-4 flex justify-center gap-2">
+                            <div className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-500">ID: {user?.uid?.slice(0, 6)}...</div>
+                        </div>
                     </div>
 
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-2 mb-4 text-dhl-red">
-                            <span />
-                            <h3 className="font-bold uppercase text-sm">Integrations</h3>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-slate-400 uppercase block">Line Notify Token</label>
-                            <input
-                                type="password"
-                                className="w-full p-3 bg-slate-50 border rounded-lg outline-none text-sm font-mono"
-                                placeholder="Paste token here..."
-                                value={token}
-                                onChange={e => setToken(e.target.value)}
-                            />
-                            <div className="flex justify-between items-center">
-                                <a href="https://notify-bot.line.me/my/" target="_blank" className="text-xs text-blue-500 underline">Get Token Here</a>
-                                <button onClick={saveToken} className="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition-colors">
-                                    Save Token
-                                </button>
-                            </div>
-                            {status && <p className="text-green-600 text-xs font-bold text-right transition-opacity">{status}</p>}
-                        </div>
-
-                        <div className="mt-6 pt-6 border-t border-slate-100">
-                            <p className="text-xs text-slate-400 mb-2">How to use:</p>
-                            <ol className="text-xs text-slate-600 space-y-1 list-decimal list-inside">
-                                <li>Go to Line Notify & Login.</li>
-                                <li>"Generate Token" {'>'} Select Chat.</li>
-                                <li>Paste Token above & Save.</li>
-                                <li>Invite <b>Line Notify</b> bot to that chat.</li>
-                            </ol>
-                        </div>
+                        <h3 className="text-sm font-bold uppercase text-slate-400 mb-4">Account Actions</h3>
+                        <button onClick={onLogout} className="w-full py-3 border-2 border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                            <LogOut size={18} /> Sign Out
+                        </button>
                     </div>
                 </div>
             );
@@ -1292,7 +1388,7 @@
             // Main App
             return (
                 <div className="min-h-screen bg-slate-50 flex flex-col">
-                    <Header user={user} onLogout={handleLogout} />
+                    <Header user={user} onLogout={handleLogout} onSettings={() => setActiveTab('settings')} />
 
                     <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 pb-24 md:pb-6">
 
@@ -1374,6 +1470,7 @@
                                                 <Dashboard logs={logs} />
                                             </>
                                         )}
+                                        {activeTab === 'settings' && <Settings />}
                                     </div>
                                 )}
                             </main>

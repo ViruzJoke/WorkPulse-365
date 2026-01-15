@@ -1,8 +1,28 @@
 # Changelog - WorkPulse 365
 
 All notable changes to this project will be documented in this file.
+## [1.3.0] - 2026-01-15 (Afternoon Update)
 
-## [1.2.0] - 2026-01-15
+### Added
+- **Dashboard Analytics Upgrade**:
+    - **Yearly Overview**: New Bar Chart showing Total vs. Completed tasks by month.
+    - **Smart Filtering**: Added Monthly Filter to slice data by specific months or "All Time".
+    - **Category Breakdown**: Detailed status table showing Open/Done counts per category.
+    - **Priority Visualization**: Dynamic Pie Chart updating based on selected month.
+- **Automation Center**:
+    - **"Run Daily Briefing" Button**: Trigger Google Apps Script / Line Notify directly from the Dashboard.
+    - **Web App Integration**: Support for triggering server-side scripts via Web App URL (bypassing CORS issues).
+- **Settings & Configuration**:
+    - **Dedicated Settings Page**: Configure Automation URLs and Personal Preferences (Default Priority/Category).
+    - **Persistent Config**: Settings are saved to `localStorage` for convenience.
+    - **Smart Defaults**: Quick Log now pre-fills with your preferred Priority and Category.
+- **Developer Experience**:
+    - **Stand-alone Automation Script**: Consolidated `AUTOMATION_CODE.js` (Single file) with embedded Firestore library to eliminate dependencies.
+    - **Deployment Guide**: Updated docs for Web App deployment and Button integration.
+
+### Fixed
+- **App Crash**: Resolved "White Screen" crash caused by `Firestore is already declared` in Google Apps Script.
+- **Profile UI**: Cleaned up Profile page by moving technical settings to the new Settings view.
 
 ### Added
 - **Smart SLAs**: Added dynamic countdown timer (Business Days only) in Timeline to track deadlines based on priority.
