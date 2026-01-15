@@ -11,7 +11,17 @@ export default function Dashboard({ logs }) {
         // Monthly
         const monthlyData = {};
         logs.forEach(log => {
-            const month = new Date(log.date).toLocaleString('default', { month: 'short' });
+            let month = 'Unknown';
+            try {
+                if (log.date) {
+                    const date = new Date(log.date);
+                    if (!isNaN(date.getTime())) {
+                        month = date.toLocaleString('default', { month: 'short' });
+                    }
+                }
+            } catch (e) {
+                // Ignore invalid dates
+            }
             monthlyData[month] = (monthlyData[month] || 0) + 1;
         });
         const monthlyChartData = Object.entries(monthlyData).map(([name, value]) => ({ name, value }));

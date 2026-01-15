@@ -151,12 +151,28 @@ export default function Timeline({ logs, onDelete, onUpdate }) {
     const groupedLogs = useMemo(() => {
         const groups = {};
         logs.forEach(log => {
-            const date = new Date(log.date);
-            const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            if (!groups[monthYear]) groups[monthYear] = [];
-            groups[monthYear].push(log);
+            try {
+                if (!log.date) throw new Error('No date');
+                const date = new Date(log.date);
+                if (isNaN(date.getTime())) throw new Error('Invalid date'); // Check for Invalid Date
+
+                const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                if (!groups[monthYear]) groups[monthYear] = [];
+                groups[monthYear].push(log);
+            } catch (err) {
+                // Fallback for logs with missing/invalid dates
+                const fallbackKey = 'Recent / Unsorted';
+                if (!groups[fallbackKey]) groups[fallbackKey] = [];
+                groups[fallbackKey].push(log);
+            }
         });
-        return Object.entries(groups).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+        return Object.entries(groups).sort((a, b) => {
+            // Keep 'Recent / Unsorted' at the top or handling specific sorting
+            if (a[0] === 'Recent / Unsorted') return -1;
+            if (b[0] === 'Recent / Unsorted') return 1;
+            return new Date(b[0]) - new Date(a[0]);
+        });
     }, [logs]);
 
     if (logs.length === 0) {
