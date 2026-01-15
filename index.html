@@ -1013,6 +1013,78 @@
                             </div>
                         </div>
                     </div>
+                    {/* Notifications / Briefing Section */}
+                    <div className="bg-slate-800 text-white p-5 rounded-xl shadow-md border border-slate-700 relative overflow-hidden">
+                        <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div>
+                                <h3 className="text-sm font-bold uppercase text-dhl-yellow flex items-center gap-2">
+                                    <MessageSquare size={16} /> Daily Briefing
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1">Check for overdue updates & generate summary.</p>
+                            </div>
+                        </div>
+
+                        {/* Analysis Logic */}
+                        {(() => {
+                            // Find tasks needing update (simplified logic based on Priority)
+                            const needingUpdate = logs.filter(log => {
+                                if (log.status === 'Done') return false;
+                                const lastAction = log.lastUpdateDate ? new Date(log.lastUpdateDate) : new Date(log.date);
+                                // Safety check for dates
+                                if (isNaN(lastAction.getTime())) return false;
+
+                                const daysSince = (new Date() - lastAction) / (1000 * 60 * 60 * 24);
+
+                                // Thresholds: P1=1, P2=3, P3=5, P4=10
+                                const pDays = { 'P1': 1, 'P2': 3, 'P3': 5, 'P4': 10, 'P5': 30 };
+                                const limit = pDays[log.priority] || 7;
+                                return daysSince >= limit;
+                            });
+
+                            return (
+                                <div className="space-y-3 relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl font-black text-white">{needingUpdate.length}</div>
+                                        <div className="text-xs text-slate-300 leading-tight">
+                                            Tasks need<br />updates today
+                                        </div>
+                                    </div>
+
+                                    {needingUpdate.length > 0 && (
+                                        <div className="bg-white/10 rounded p-2 text-xs text-slate-300 max-h-24 overflow-y-auto custom-scrollbar">
+                                            <ul className="space-y-1">
+                                                {needingUpdate.map(l => (
+                                                    <li key={l.id} className="truncate">• {l.title} ({l.priority})</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => {
+                                            const lines = [
+                                                "🔔 *WorkPulse Briefing*",
+                                                `📅 ${new Date().toLocaleDateString()}`,
+                                                "",
+                                                `⚠️ *${needingUpdate.length} Tasks Need Attention:*`,
+                                                ...needingUpdate.map(l => `- ${l.title} (${l.priority})`),
+                                                "",
+                                                "Please update these items in WorkPulse."
+                                            ];
+                                            const msg = lines.join('\n');
+                                            // Open Line Share link
+                                            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, '_blank');
+                                        }}
+                                        className="w-full py-2 bg-dhl-red hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <Share2 size={14} /> Send Briefing to Line
+                                    </button>
+                                </div>
+                            );
+                        })()}
+                    </div>
                 </div>
             );
         };
