@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 - **Smart SLAs**: Added dynamic countdown timer (Business Days only) in Timeline to track deadlines based on priority.
 - **Smart Categorization**: Implemented 2-level classification (Category > Application) for structured data entry.
 - **Offline Persistence**: Enabled IndexDB caching so the app loads instantly and works offline.
-- **Enhanced Editing**: Enabled full editing of Category, Application, Priority, Customer, and Target Date.
+- **Enhanced Editing**: Enabled full editing of Category, Application, Priority, Customer, and Target Date. Split "Edit Info" and "Add Update" into separate actions for better control.
+- **History Management**: Added ability to delete specific update history entries.
 - **Initial Load Optimization**: Limited initial firestore query to 10 items (with "Load All" button) to save quota.
 - **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs.
 - **Task Completion**: Added ability to mark tasks as "Done" with visual dimming.
