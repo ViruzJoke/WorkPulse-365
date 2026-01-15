@@ -121,11 +121,52 @@
 
         // --- Constants ---
         const PRIORITIES = {
-            'P1': { label: 'P1 - Critical (Daily)', color: 'bg-red-600 text-white', days: 1 },
+            'P1': { label: 'P1 - Critical (1 Day)', color: 'bg-red-600 text-white', days: 1 },
             'P2': { label: 'P2 - High (3 Days)', color: 'bg-orange-500 text-white', days: 3 },
-            'P3': { label: 'P3 - Medium (Weekly)', color: 'bg-yellow-500 text-white', days: 7 },
-            'P4': { label: 'P4 - Low (Monthly)', color: 'bg-blue-500 text-white', days: 30 },
-            'P5': { label: 'P5 - Trivial', color: 'bg-slate-400 text-white', days: 0 }
+            'P3': { label: 'P3 - Medium (5 Days)', color: 'bg-yellow-500 text-white', days: 5 },
+            'P4': { label: 'P4 - Low (10 Days)', color: 'bg-blue-500 text-white', days: 10 },
+            'P5': { label: 'P5 - Trivial (30 Days)', color: 'bg-slate-400 text-white', days: 30 }
+        };
+
+        // Helper: Add Business Days (Skip Sat/Sun)
+        const addBusinessDays = (dateStr, days) => {
+            let current = new Date(dateStr);
+            let added = 0;
+            while (added < days) {
+                current.setDate(current.getDate() + 1);
+                const day = current.getDay();
+                if (day !== 0 && day !== 6) added++;
+            }
+            return current;
+        };
+
+        // Helper: Get Business Days Remaining
+        const getBusinessDaysLeft = (targetDate) => {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(targetDate);
+            end.setHours(0, 0, 0, 0);
+
+            if (start > end) {
+                // Overdue: count business days backwards
+                let count = 0;
+                let current = new Date(end);
+                while (current < start) {
+                    current.setDate(current.getDate() + 1);
+                    const day = current.getDay();
+                    if (day !== 0 && day !== 6) count++;
+                }
+                return -count;
+            }
+
+            let count = 0;
+            let current = new Date(start);
+            while (current < end) {
+                current.setDate(current.getDate() + 1);
+                const day = current.getDay();
+                if (day !== 0 && day !== 6) count++;
+            }
+            return count;
         };
 
         const CATEGORY_MAPPING = {
@@ -248,6 +289,8 @@
 
             // Form States
             const [editTitle, setEditTitle] = useState(log.title);
+            const [editCustomer, setEditCustomer] = useState(log.customer || '');
+            const [editTargetMonth, setEditTargetMonth] = useState(log.targetMonth || '');
             const [editPriority, setEditPriority] = useState(log.priority || 'P3');
 
             // --- Fix for White Screen (Old Data Compatibility) ---
@@ -300,6 +343,8 @@
                     priority: editPriority,
                     category: editCategory,
                     application: editApp,
+                    customer: editCustomer,
+                    targetMonth: editTargetMonth,
                     updates: updatedUpdates,
                     lastUpdateDate: (newUpdate ? updateDate : log.lastUpdateDate) || new Date().toISOString().split('T')[0],
                     updateChannel: (newUpdate ? updateChannel : log.updateChannel) || 'Chat'
@@ -421,13 +466,29 @@
                                     {CATEGORY_MAPPING[editCategory].map(a => <option key={a} value={a}>{a}</option>)}
                                 </select>
                             </div>
-                            <div className="col-span-2 space-y-1">
+                            <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Priority</label>
                                 <select
                                     value={editPriority} onChange={e => setEditPriority(e.target.value)}
                                     className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
                                     {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{k}</option>)}
                                 </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Target</label>
+                                <input
+                                    type="month"
+                                    value={editTargetMonth} onChange={e => setEditTargetMonth(e.target.value)}
+                                    className="w-full p-2 bg-white border rounded text-xs font-bold outline-none"
+                                />
+                            </div>
+                            <div className="col-span-2 space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Customer</label>
+                                <input
+                                    value={editCustomer} onChange={e => setEditCustomer(e.target.value)}
+                                    className="w-full p-2 bg-white border rounded text-xs font-bold outline-none"
+                                    placeholder="Customer name (Optional)"
+                                />
                             </div>
                         </div>
 
@@ -486,17 +547,41 @@
                                 <h4 className="text-slate-800 font-bold text-lg leading-snug mb-1">{log.title}</h4>
                                 {log.customer && <div className="text-xs font-bold text-slate-400 flex items-center gap-1 mb-2"><span className="w-1 h-1 bg-slate-400 rounded-full"></span> {log.customer}</div>}
 
-                                {/* Latest Update Summary (if exists) */}
-                                {log.lastUpdateDate && (
-                                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-600 bg-yellow-50 p-2 rounded border border-yellow-100 inline-block">
-                                        <span className="font-bold text-dhl-red">LATEST:</span>
-                                        <span className="flex items-center gap-1">
-                                            {new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                            <span className="opacity-50 mx-1">|</span>
-                                            <span className={`w-2 h-2 rounded-full ${log.updateChannel === 'Email' ? 'bg-blue-400' : log.updateChannel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}></span> {log.updateChannel}
-                                        </span>
-                                    </div>
-                                )}
+                                {/* Latest Update & Countdown */}
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    {log.lastUpdateDate && (
+                                        <div className="flex items-center gap-2 text-xs text-slate-600 bg-yellow-50 p-2 rounded border border-yellow-100">
+                                            <span className="font-bold text-dhl-red">LATEST:</span>
+                                            <span className="flex items-center gap-1">
+                                                {new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                <span className="opacity-50 mx-1">|</span>
+                                                <span className={`w-2 h-2 rounded-full ${log.updateChannel === 'Email' ? 'bg-blue-400' : log.updateChannel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}></span> {log.updateChannel}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Days Remaining Countdown */}
+                                    {log.status !== 'Done' && (
+                                        (() => {
+                                            const lastActionDate = log.lastUpdateDate || log.date;
+                                            const pDays = PRIORITIES[log.priority]?.days || 30;
+                                            const dueDate = addBusinessDays(lastActionDate, pDays);
+                                            const daysLeft = getBusinessDaysLeft(dueDate);
+
+                                            let colorClass = 'bg-green-100 text-green-700 border-green-200';
+                                            if (daysLeft < 0) colorClass = 'bg-red-100 text-red-700 border-red-200 animate-pulse';
+                                            else if (daysLeft <= 1) colorClass = 'bg-red-50 text-red-600 border-red-100';
+                                            else if (daysLeft <= 2) colorClass = 'bg-orange-100 text-orange-700 border-orange-200';
+
+                                            return (
+                                                <div className={`text-[10px] font-bold px-2 py-1 rounded border flex items-center gap-1 ${colorClass}`}>
+                                                    <span className="text-sm">⏳</span>
+                                                    {daysLeft < 0 ? `${Math.abs(daysLeft)} Days Overdue` : `${daysLeft} Days Left`}
+                                                </div>
+                                            );
+                                        })()
+                                    )}
+                                </div>
                             </div>
 
                             {/* Actions */}

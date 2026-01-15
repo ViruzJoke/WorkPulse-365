@@ -2,20 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-01-15
+
+### Added
+- **Smart SLAs**: Added dynamic countdown timer (Business Days only) in Timeline to track deadlines based on priority.
+- **Smart Categorization**: Implemented 2-level classification (Category > Application) for structured data entry.
+- **Offline Persistence**: Enabled IndexDB caching so the app loads instantly and works offline.
+- **Enhanced Editing**: Enabled full editing of Category, Application, Priority, Customer, and Target Date.
+- **Initial Load Optimization**: Limited initial firestore query to 10 items (with "Load All" button) to save quota.
+- **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs.
+- **Task Completion**: Added ability to mark tasks as "Done" with visual dimming.
+
+### Fixed
+- **Tag Saving**: Fixed bug where changing tags without adding a note didn't save.
+- **White Screen**: Fixed crash when loading old logs with obsolete categories.
+
 ## [1.1.0] - 2026-01-12
 
 ### Added
 - **Line OA Integration**: Full integration with Line Official Account using Vercel Serverless Function (`api/send-line.js`) to send beautiful Flex Messages.
 - **Responsive Design**: Upgraded UI to fully support Desktop (Sidebar + Grid Layout) while keeping Mobile-optimized bottom navigation.
 - **Google Authentication**: Replaced Anonymous login with secure Google Sign-In, enabling persistent profiles and syncing across devices.
-- **Smart Categorization**: Implemented 2-level classification (Category > Application) for structured data entry.
-- **Enhanced Editing**: Enabled full editing of Category, Application, and Priority for existing tasks.
-- **Offline Persistence**: Enabled smart caching (IndexedDB) for instant loading and offline capability.
-- **Optimized Initial Load**: Limit initial fetch to 10 items to minimize bandwidth/quota usage.
-- **Bug Fix**: Resolved issue where updating tags without adding a new note would fail silently.
-- **Task Completion Status**: Added checkmark button to toggle "Done" status. Completed tasks are highlighted green and dim.
-- **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs for better organization.
-- **Home Dashboard Logic**: Automatically hides "Done" tasks from the "Upcoming & Critical" view.
 - **Vercel Deployment Support**: Configured `package.json` and API routes for seamless Vercel deployment.
 
 ### Changed
