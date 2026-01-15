@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - **Google Authentication**: Replaced Anonymous login with secure Google Sign-In, enabling persistent profiles and syncing across devices.
 - **Smart Categorization**: Implemented 2-level classification (Category > Application) for structured data entry.
 - **Enhanced Editing**: Enabled full editing of Category, Application, and Priority for existing tasks.
+- **Offline Persistence**: Enabled smart caching (IndexedDB) for instant loading and offline capability.
+- **Optimized Initial Load**: Limit initial fetch to 10 items to minimize bandwidth/quota usage.
 - **Task Completion Status**: Added checkmark button to toggle "Done" status. Completed tasks are highlighted green and dim.
 - **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs for better organization.
 - **Home Dashboard Logic**: Automatically hides "Done" tasks from the "Upcoming & Critical" view.
