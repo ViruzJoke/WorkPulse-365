@@ -292,6 +292,8 @@
                 const currentUpdates = log.updates || [];
                 const updatedUpdates = newUpdate ? [newUpdate, ...currentUpdates] : currentUpdates;
 
+                // Fix: Ensure no undefined values are passed to Firestore
+                // Firestore throws error if field value is undefined
                 const updatedLog = {
                     ...log,
                     title: editTitle,
@@ -299,8 +301,8 @@
                     category: editCategory,
                     application: editApp,
                     updates: updatedUpdates,
-                    lastUpdateDate: newUpdate ? updateDate : log.lastUpdateDate,
-                    updateChannel: newUpdate ? updateChannel : log.updateChannel
+                    lastUpdateDate: (newUpdate ? updateDate : log.lastUpdateDate) || new Date().toISOString().split('T')[0],
+                    updateChannel: (newUpdate ? updateChannel : log.updateChannel) || 'Chat'
                 };
 
                 onUpdate(log.id, updatedLog);

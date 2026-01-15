@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - **Enhanced Editing**: Enabled full editing of Category, Application, and Priority for existing tasks.
 - **Offline Persistence**: Enabled smart caching (IndexedDB) for instant loading and offline capability.
 - **Optimized Initial Load**: Limit initial fetch to 10 items to minimize bandwidth/quota usage.
+- **Bug Fix**: Resolved issue where updating tags without adding a new note would fail silently.
 - **Task Completion Status**: Added checkmark button to toggle "Done" status. Completed tasks are highlighted green and dim.
 - **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs for better organization.
 - **Home Dashboard Logic**: Automatically hides "Done" tasks from the "Upcoming & Critical" view.
