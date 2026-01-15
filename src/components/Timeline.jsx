@@ -7,7 +7,15 @@ const LogCard = ({ log, onDelete, onUpdate }) => {
     const [editImpact, setEditImpact] = useState(log.impact);
 
     // New Fields
-    const [lastUpdateDate, setLastUpdateDate] = useState(log.lastUpdateDate || '');
+    // safely extract YYYY-MM-DD from ISO string or use existing date string
+    const [lastUpdateDate, setLastUpdateDate] = useState(() => {
+        if (!log.lastUpdateDate) return '';
+        try {
+            return log.lastUpdateDate.split('T')[0];
+        } catch (e) {
+            return '';
+        }
+    });
     const [updateChannel, setUpdateChannel] = useState(log.updateChannel || 'Chat');
 
     const handleSave = () => {
@@ -92,7 +100,13 @@ const LogCard = ({ log, onDelete, onUpdate }) => {
                         {log.lastUpdateDate && (
                             <span className="flex items-center gap-1 text-slate-500 normal-case ml-auto sm:ml-0 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-100">
                                 <span className={`w-2 h-2 rounded-full ${log.updateChannel === 'Email' ? 'bg-blue-400' : log.updateChannel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}></span>
-                                {new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                {(() => {
+                                    try {
+                                        return new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                    } catch (e) {
+                                        return 'Invalid Date';
+                                    }
+                                })()}
                             </span>
                         )}
                     </div>

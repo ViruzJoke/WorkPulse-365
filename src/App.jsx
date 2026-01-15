@@ -34,10 +34,32 @@ export default function App() {
                 const q = query(logsRef, orderBy('date', 'desc'), orderBy('createdAt', 'desc'));
 
                 const unsubSnapshot = onSnapshot(q, (snapshot) => {
-                    const logsData = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
+                    const logsData = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        
+                        // Helper to convert Firestore Timestamp to standard format
+                        const convertDate = (val) => {
+                            if (!val) return null;
+                            // If it's a Firestore Timestamp (has toDate method)
+                            if (val && typeof val.toDate === 'function') {
+                                return val.toDate().toISOString();
+                            }
+                            // If it's already a date object
+                            if (val instanceof Date) {
+                                return val.toISOString();
+                            }
+                            return val;
+                        };
+
+                        return {
+                            id: doc.id,
+                            ...data,
+                            // Ensure dates are strings for React props
+                            createdAt: convertDate(data.createdAt),
+                            date: convertDate(data.date) || data.date, // Keep original if not timestamp (e.g. YYYY-MM-DD string)
+                            lastUpdateDate: convertDate(data.lastUpdateDate)
+                        };
+                    });
                     setLogs(logsData);
                     setLoading(false);
                 }, (error) => {
