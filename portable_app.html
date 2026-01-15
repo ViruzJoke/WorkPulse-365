@@ -119,19 +119,30 @@
             'P5': { label: 'P5 - Trivial', color: 'bg-slate-400 text-white', days: 0 }
         };
 
+        const CATEGORY_MAPPING = {
+            'Standard': ['MyDHL+', 'Proview', 'Other'],
+            'Integration': ['MyDHL API', 'DCG', 'eAlert', 'DEC', 'Other'],
+            'Project': ['Access', 'Excel', 'Meeting', 'Other']
+        };
+
+        const ALL_APPS = ['All', ...new Set(Object.values(CATEGORY_MAPPING).flat())];
+
         const QuickLog = ({ onAddLog }) => {
             const [title, setTitle] = useState('');
-            const [category, setCategory] = useState('Solution');
-            const [application, setApplication] = useState('MyDHL+');
-            const [priority, setPriority] = useState('P3'); // Default P3
+            const [category, setCategory] = useState(Object.keys(CATEGORY_MAPPING)[0]);
+            const [application, setApplication] = useState(CATEGORY_MAPPING[Object.keys(CATEGORY_MAPPING)[0]][0]);
+            const [priority, setPriority] = useState('P3');
             const [customer, setCustomer] = useState('');
             const [targetMonth, setTargetMonth] = useState('');
             const [impact, setImpact] = useState('');
             const [isExpanded, setIsExpanded] = useState(false);
             const [loading, setLoading] = useState(false);
 
-            const CATEGORIES = ['Solution', 'Integration', 'Support', 'Meeting', 'Internal'];
-            const APPS = ['API', 'MyDHL+', 'DEC', 'DGF', 'eAlert', 'Other'];
+            const handleCategoryChange = (e) => {
+                const newCat = e.target.value;
+                setCategory(newCat);
+                setApplication(CATEGORY_MAPPING[newCat][0]);
+            };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
@@ -165,9 +176,9 @@
                             />
                             <div className="flex gap-2">
                                 <select
-                                    value={category} onChange={e => setCategory(e.target.value)}
+                                    value={category} onChange={handleCategoryChange}
                                     className="flex-1 p-2 bg-slate-100 border rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-dhl-yellow">
-                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {Object.keys(CATEGORY_MAPPING).map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <select
                                     value={priority} onChange={e => setPriority(e.target.value)}
@@ -185,7 +196,7 @@
                                         <select
                                             value={application} onChange={e => setApplication(e.target.value)}
                                             className="w-full p-2 bg-slate-50 border rounded-lg text-sm outline-none">
-                                            {APPS.map(a => <option key={a} value={a}>{a}</option>)}
+                                            {CATEGORY_MAPPING[category].map(a => <option key={a} value={a}>{a}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -222,45 +233,61 @@
         };
 
         const LogCard = ({ log, onDelete, onUpdate }) => {
-            const [isUpdateMode, setIsUpdateMode] = useState(false); // Mode for adding a status update
-            const [showDetail, setShowDetail] = useState(false); // Mode for viewing details
-            const [isEditingMainDetail, setIsEditingMainDetail] = useState(false); // Formatting "Impact"
+            const [isUpdateMode, setIsUpdateMode] = useState(false);
+            const [showDetail, setShowDetail] = useState(false);
+            const [isEditingMainDetail, setIsEditingMainDetail] = useState(false);
 
-            // Form States for "Update Status"
+            // Form States
             const [editTitle, setEditTitle] = useState(log.title);
             const [editPriority, setEditPriority] = useState(log.priority || 'P3');
-            const [updateDate, setUpdateDate] = useState(log.lastUpdateDate || new Date().toISOString().split('T')[0]);
+            const [editCategory, setEditCategory] = useState(log.category || Object.keys(CATEGORY_MAPPING)[0]);
+
+            // Ensure initial editApp is valid for the current category
+            const initialApp = (log.category && CATEGORY_MAPPING[log.category] && CATEGORY_MAPPING[log.category].includes(log.application))
+                ? log.application
+                : CATEGORY_MAPPING[log.category || Object.keys(CATEGORY_MAPPING)[0]][0];
+            const [editApp, setEditApp] = useState(initialApp);
+
+            const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
             const [updateChannel, setUpdateChannel] = useState(log.updateChannel || 'Chat');
-            const [updateContent, setUpdateContent] = useState(''); // This is the new "note" for this update
+            const [updateContent, setUpdateContent] = useState('');
 
             // Form State for "Main Detail"
             const [mainDetail, setMainDetail] = useState(log.impact);
 
             // Handlers
+            const handleEditCategoryChange = (e) => {
+                const newCat = e.target.value;
+                setEditCategory(newCat);
+                setEditApp(CATEGORY_MAPPING[newCat][0]);
+            };
+
             const handleAddUpdate = () => {
-                // 1. Create new update object
-                const newUpdate = {
+                // Create update entry if content exists
+                const newUpdate = updateContent.trim() ? {
                     date: updateDate,
                     channel: updateChannel,
                     content: updateContent,
                     timestamp: new Date().toISOString()
-                };
+                } : null;
 
-                // 2. Prepare new list
                 const currentUpdates = log.updates || [];
-                const updatedList = [newUpdate, ...currentUpdates]; // Newest first
+                const updatedUpdates = newUpdate ? [newUpdate, ...currentUpdates] : currentUpdates;
 
-                // 3. Save to Firebase
-                onUpdate(log.id, {
+                const updatedLog = {
+                    ...log,
                     title: editTitle,
                     priority: editPriority,
-                    lastUpdateDate: updateDate,
-                    updateChannel: updateChannel,
-                    updates: updatedList
-                });
+                    category: editCategory,
+                    application: editApp,
+                    updates: updatedUpdates,
+                    lastUpdateDate: newUpdate ? updateDate : log.lastUpdateDate,
+                    updateChannel: newUpdate ? updateChannel : log.updateChannel
+                };
 
+                onUpdate(log.id, updatedLog);
                 setIsUpdateMode(false);
-                setUpdateContent(''); // Reset note
+                setUpdateContent('');
             };
 
             const handleUpdateMainDetail = () => {
@@ -349,20 +376,36 @@
                             <span className="text-xs text-dhl-red font-bold uppercase">Log Status Update</span>
                         </div>
 
-                        {/* Title & Priority (Mutable) */}
-                        <div className="grid grid-cols-3 gap-2">
+                        {/* Metadata Editing: Title, Category, App, Priority */}
+                        <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-slate-50 rounded-lg">
                             <div className="col-span-2 space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Title</label>
                                 <input
-                                    className="w-full p-2 bg-slate-50 border rounded font-semibold text-slate-800 text-sm outline-none"
+                                    className="w-full p-2 bg-white border rounded font-semibold text-slate-800 text-sm outline-none"
                                     value={editTitle} onChange={e => setEditTitle(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Category</label>
+                                <select
+                                    value={editCategory} onChange={handleEditCategoryChange}
+                                    className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
+                                    {Object.keys(CATEGORY_MAPPING).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Application</label>
+                                <select
+                                    value={editApp} onChange={e => setEditApp(e.target.value)}
+                                    className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
+                                    {CATEGORY_MAPPING[editCategory].map(a => <option key={a} value={a}>{a}</option>)}
+                                </select>
+                            </div>
+                            <div className="col-span-2 space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase">Priority</label>
                                 <select
                                     value={editPriority} onChange={e => setEditPriority(e.target.value)}
-                                    className="w-full p-2 bg-slate-50 border rounded text-xs font-bold outline-none">
+                                    className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
                                     {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{k}</option>)}
                                 </select>
                             </div>
@@ -523,7 +566,7 @@
             const [sortBy, setSortBy] = useState('updated'); // updated | created
             const [statusTab, setStatusTab] = useState('ongoing'); // ongoing | complete
 
-            const APPS = ['All', 'API', 'MyDHL+', 'DEC', 'DGF', 'eAlert', 'Other'];
+
 
             const filteredLogs = useMemo(() => {
                 let result = [...logs];
@@ -622,7 +665,7 @@
 
                         {/* Filter Chips */}
                         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                            {APPS.map(app => (
+                            {ALL_APPS.map(app => (
                                 <button
                                     key={app}
                                     onClick={() => setFilterApp(app)}

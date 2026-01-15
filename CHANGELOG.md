@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - **Line OA Integration**: Full integration with Line Official Account using Vercel Serverless Function (`api/send-line.js`) to send beautiful Flex Messages.
 - **Responsive Design**: Upgraded UI to fully support Desktop (Sidebar + Grid Layout) while keeping Mobile-optimized bottom navigation.
 - **Google Authentication**: Replaced Anonymous login with secure Google Sign-In, enabling persistent profiles and syncing across devices.
+- **Smart Categorization**: Implemented 2-level classification (Category > Application) for structured data entry.
+- **Enhanced Editing**: Enabled full editing of Category, Application, and Priority for existing tasks.
 - **Task Completion Status**: Added checkmark button to toggle "Done" status. Completed tasks are highlighted green and dim.
 - **Timeline Tabs**: Split timeline into "Ongoing" and "Complete" tabs for better organization.
 - **Home Dashboard Logic**: Automatically hides "Done" tasks from the "Upcoming & Critical" view.
