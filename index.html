@@ -240,13 +240,20 @@
             // Form States
             const [editTitle, setEditTitle] = useState(log.title);
             const [editPriority, setEditPriority] = useState(log.priority || 'P3');
-            const [editCategory, setEditCategory] = useState(log.category || Object.keys(CATEGORY_MAPPING)[0]);
 
-            // Ensure initial editApp is valid for the current category
-            const initialApp = (log.category && CATEGORY_MAPPING[log.category] && CATEGORY_MAPPING[log.category].includes(log.application))
+            // --- Fix for White Screen (Old Data Compatibility) ---
+            // Fallback if log.category is from old version and not in new MAPPING
+            const defaultCategory = Object.keys(CATEGORY_MAPPING)[0];
+            const safeCategory = (log.category && CATEGORY_MAPPING[log.category]) ? log.category : defaultCategory;
+            const [editCategory, setEditCategory] = useState(safeCategory);
+
+            // Fallback for Application
+            const safeAppList = CATEGORY_MAPPING[safeCategory] || [];
+            const safeApp = (log.application && safeAppList.includes(log.application))
                 ? log.application
-                : CATEGORY_MAPPING[log.category || Object.keys(CATEGORY_MAPPING)[0]][0];
-            const [editApp, setEditApp] = useState(initialApp);
+                : safeAppList[0] || 'Other';
+
+            const [editApp, setEditApp] = useState(safeApp);
 
             const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
             const [updateChannel, setUpdateChannel] = useState(log.updateChannel || 'Chat');
@@ -259,7 +266,9 @@
             const handleEditCategoryChange = (e) => {
                 const newCat = e.target.value;
                 setEditCategory(newCat);
-                setEditApp(CATEGORY_MAPPING[newCat][0]);
+                // Reset app to first item of new category
+                const newApps = CATEGORY_MAPPING[newCat] || [];
+                setEditApp(newApps[0] || '');
             };
 
             const handleAddUpdate = () => {
