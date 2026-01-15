@@ -36,7 +36,7 @@ export default function App() {
                 const unsubSnapshot = onSnapshot(q, (snapshot) => {
                     const logsData = snapshot.docs.map(doc => {
                         const data = doc.data();
-                        
+
                         // Helper to convert Firestore Timestamp to standard format
                         const convertDate = (val) => {
                             if (!val) return null;
@@ -51,12 +51,26 @@ export default function App() {
                             return val;
                         };
 
+                        const safeString = (str, def = '') => {
+                            if (typeof str === 'string') return str;
+                            if (typeof str === 'number') return String(str);
+                            return def;
+                        };
+
                         return {
                             id: doc.id,
                             ...data,
+                            // Aggressive sanitization to prevent rendering crashes
+                            title: safeString(data.title, 'Untitled Log'),
+                            category: safeString(data.category, 'General'),
+                            application: safeString(data.application),
+                            customer: safeString(data.customer),
+                            impact: safeString(data.impact),
+                            updateChannel: safeString(data.updateChannel, 'Chat'),
+
                             // Ensure dates are strings for React props
                             createdAt: convertDate(data.createdAt),
-                            date: convertDate(data.date) || data.date, // Keep original if not timestamp (e.g. YYYY-MM-DD string)
+                            date: convertDate(data.date) || data.date || new Date().toISOString(), // Fallback to current date if absolutely missing
                             lastUpdateDate: convertDate(data.lastUpdateDate)
                         };
                     });

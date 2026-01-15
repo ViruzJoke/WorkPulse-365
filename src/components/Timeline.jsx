@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Edit2, Calendar } from 'lucide-react';
+import { Trash2, Edit2 } from 'lucide-react';
 
 const LogCard = ({ log, onDelete, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -191,7 +191,11 @@ export default function Timeline({ logs, onDelete, onUpdate }) {
                         {month}
                     </h3>
                     <div className="space-y-4">
-                        {monthLogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((log) => (
+                        {monthLogs.sort((a, b) => {
+                            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                            return dateB - dateA;
+                        }).map((log) => (
                             <LogCard key={log.id} log={log} onDelete={onDelete} onUpdate={onUpdate} />
                         ))}
                     </div>
