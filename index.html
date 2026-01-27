@@ -131,54 +131,62 @@
             'P5': { label: 'P5 - Trivial (30 Days)', color: 'bg-slate-400 text-white', days: 30 }
         };
 
-        // Helper: Add Business Days (Skip Sat/Sun, with Safety)
+        // Helper: Add Business Days (Skip Sat/Sun)
+        // Rule: If we need to add 1 day to Friday, we arrive at Monday.
         const addBusinessDays = (dateStr, days) => {
-            if (!dateStr) return new Date();
-            let current = new Date(dateStr);
-            if (isNaN(current.getTime())) return new Date(); // Fallback
+            const start = dateStr ? new Date(dateStr) : new Date();
+            if (isNaN(start.getTime())) return new Date();
 
+            let current = new Date(start.valueOf());
             let added = 0;
+            // Safety break to prevent infinite loops
             let safety = 0;
+
             while (added < days && safety < 365) {
                 current.setDate(current.getDate() + 1);
                 const day = current.getDay();
-                if (day !== 0 && day !== 6) added++;
+                // 0 = Sunday, 6 = Saturday. Skip these.
+                if (day !== 0 && day !== 6) {
+                    added++;
+                }
                 safety++;
             }
             return current;
         };
 
-        // Helper: Get Business Days Remaining (with Safety)
+        // Helper: Get Business Days Remaining
+        // Calculates working days between Now and Target.
         const getBusinessDaysLeft = (targetDate) => {
             if (!targetDate || isNaN(targetDate.getTime())) return 0;
 
             const start = new Date();
-            start.setHours(0, 0, 0, 0);
+            start.setHours(0, 0, 0, 0); // Normalized Today
+
             const end = new Date(targetDate);
-            end.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0); // Normalized Target
+
+            // If same day
+            if (start.getTime() === end.getTime()) return 0;
+
+            // Determine direction and swap if needed for simple counting
+            const isOverdue = start > end;
+            let from = isOverdue ? end : start;
+            let to = isOverdue ? start : end;
 
             let count = 0;
+            let ptr = new Date(from.valueOf());
             let safety = 0;
 
-            if (start > end) {
-                let current = new Date(end);
-                while (current < start && safety < 1000) {
-                    current.setDate(current.getDate() + 1);
-                    const day = current.getDay();
-                    if (day !== 0 && day !== 6) count++;
-                    safety++;
+            while (ptr < to && safety < 1000) {
+                ptr.setDate(ptr.getDate() + 1);
+                const day = ptr.getDay();
+                if (day !== 0 && day !== 6) {
+                    count++;
                 }
-                return -count;
-            }
-
-            let current = new Date(start);
-            while (current < end && safety < 1000) {
-                current.setDate(current.getDate() + 1);
-                const day = current.getDay();
-                if (day !== 0 && day !== 6) count++;
                 safety++;
             }
-            return count;
+
+            return isOverdue ? -count : count;
         };
 
         const CATEGORY_MAPPING = {
@@ -617,7 +625,10 @@
                                             }
 
                                             return (
-                                                <div className={`text-[10px] font-bold px-2 py-1 rounded border flex items-center gap-1 ${colorClass}`}>
+                                                <div
+                                                    className={`text-[10px] font-bold px-2 py-1 rounded border flex items-center gap-1 ${colorClass}`}
+                                                    title={`Target Date: ${dueDate.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (Excl. Weekends)`}
+                                                >
                                                     <span className="text-sm">⏳</span>
                                                     {label}
                                                 </div>
