@@ -308,17 +308,27 @@
         };
 
         const LogCard = ({ log, onDelete, onUpdate }) => {
-            const [isUpdateMode, setIsUpdateMode] = useState(false);
-            const [showDetail, setShowDetail] = useState(false);
-            const [isEditingMainDetail, setIsEditingMainDetail] = useState(false);
+            const [isExpanded, setIsExpanded] = useState(false);
+            const [isEditingInfo, setIsEditingInfo] = useState(false);
 
-            // Form States
+            // Update Log fields
+            const [editImpact, setEditImpact] = useState(log.impact || '');
+            const [lastUpdateDate, setLastUpdateDate] = useState(() => {
+                if (!log.lastUpdateDate) return '';
+                try {
+                    return log.lastUpdateDate.split('T')[0];
+                } catch (e) {
+                    return '';
+                }
+            });
+            const [updateChannel, setUpdateChannel] = useState(log.updateChannel || 'Chat');
+
+            // Edit Info fields
             const [editTitle, setEditTitle] = useState(log.title);
             const [editCustomer, setEditCustomer] = useState(log.customer || '');
             const [editTargetMonth, setEditTargetMonth] = useState(log.targetMonth || '');
             const [editPriority, setEditPriority] = useState(log.priority || 'P3');
 
-            // --- Fix for White Screen (Old Data Compatibility) ---
             // Fallback if log.category is from old version and not in new MAPPING
             const defaultCategory = Object.keys(CATEGORY_MAPPING)[0];
             const safeCategory = (log.category && CATEGORY_MAPPING[log.category]) ? log.category : defaultCategory;
@@ -332,73 +342,40 @@
 
             const [editApp, setEditApp] = useState(safeApp);
 
-            const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
-            const [updateChannel, setUpdateChannel] = useState('');
-            const [updateContent, setUpdateContent] = useState('');
-
-            // Form State for "Main Detail"
-            const [mainDetail, setMainDetail] = useState(log.impact);
-
             // Handlers
             const handleEditCategoryChange = (e) => {
                 const newCat = e.target.value;
                 setEditCategory(newCat);
-                // Reset app to first item of new category
                 const newApps = CATEGORY_MAPPING[newCat] || [];
                 setEditApp(newApps[0] || '');
             };
 
-            // Separate Handlers for "Edit Info" vs "Add Update"
-            const handleSaveMetadata = () => {
-                const updatedLog = {
-                    ...log,
+            const handleUpdateLog = (e) => {
+                if (e) e.stopPropagation();
+                onUpdate(log.id, {
+                    impact: editImpact,
+                    lastUpdateDate,
+                    updateChannel
+                });
+                setIsExpanded(false);
+            };
+
+            const handleSaveInfo = (e) => {
+                if (e) e.stopPropagation();
+                onUpdate(log.id, {
                     title: editTitle,
                     priority: editPriority,
                     category: editCategory,
                     application: editApp,
                     customer: editCustomer,
                     targetMonth: editTargetMonth
-                };
-                onUpdate(log.id, updatedLog);
-                setIsUpdateMode(false);
+                });
+                setIsEditingInfo(false);
             };
 
-            const handleAddProgress = () => {
-                if (!updateContent.trim()) return;
-
-                const newUpdate = {
-                    date: updateDate,
-                    channel: updateChannel,
-                    content: updateContent,
-                    timestamp: new Date().toISOString()
-                };
-
-                const updatedLog = {
-                    ...log,
-                    // Only update history fields, keep current metadata
-                    updates: [newUpdate, ...(log.updates || [])],
-                    lastUpdateDate: updateDate,
-                    updateChannel: updateChannel
-                };
-
-                onUpdate(log.id, updatedLog);
-                setIsUpdateMode(false);
-                setUpdateContent('');
-            };
-
-            const handleUpdateMainDetail = () => {
-                onUpdate(log.id, { impact: mainDetail });
-                setIsEditingMainDetail(false);
-            };
-
-            const handleDeleteUpdate = (indexToRemove) => {
-                if (!confirm("Are you sure you want to delete this update?")) return;
-                const newUpdates = (log.updates || []).filter((_, idx) => idx !== indexToRemove);
-                onUpdate(log.id, { updates: newUpdates });
-            };
-
-            const setToday = () => {
-                setUpdateDate(new Date().toISOString().split('T')[0]);
+            const setToday = (e) => {
+                if (e) e.stopPropagation();
+                setLastUpdateDate(new Date().toISOString().split('T')[0]);
             };
 
             const handleToggleComplete = (e) => {
@@ -406,165 +383,83 @@
                 onUpdate(log.id, { status: log.status === 'Done' ? 'Open' : 'Done' });
             };
 
-            const handleLineOA = async (e) => {
-                e.stopPropagation();
-                let apiUrl = localStorage.getItem('vercelApiUrl');
-
-                // Check specifically for send-line endpoint to avoid confusion with previous teams url
-                if (!apiUrl || !apiUrl.includes('send-line')) {
-                    apiUrl = prompt("Enter Vercel API URL for Line (e.g., .../api/send-line):", apiUrl || "");
-                    if (apiUrl) localStorage.setItem('vercelApiUrl', apiUrl);
-                    else return;
-                }
-
-                if (!confirm(`Send Flex Message to Line OA?\nTask: ${log.title}`)) return;
-
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            title: log.title,
-                            category: log.category,
-                            priority: log.priority,
-                            app: log.application,
-                            impact: log.impact
-                        })
-                    });
-
-                    if (response.ok) {
-                        alert('✅ Sent to Line OA!');
-                    } else {
-                        const err = await response.json().catch(() => ({}));
-                        throw new Error(err.error || response.statusText);
-                    }
-                } catch (err) {
-                    alert('❌ Error: ' + err.message);
-                    if (confirm("Reset API URL?")) localStorage.removeItem('vercelApiUrl');
-                }
-            };
-
-            const handleLineShare = (e) => {
-                e.stopPropagation();
-                // 1. Emojis per priority
-                const emojis = { 'P1': '🚨', 'P2': '⚠️', 'P3': '📝', 'P4': '📌', 'P5': '💤' };
-                const icon = emojis[log.priority] || '📢';
-
-                // 2. Get latest info
-                const latestContent = (log.updates && log.updates.length > 0) ? log.updates[0].content : log.impact;
-                const displayDate = log.lastUpdateDate ? new Date(log.lastUpdateDate).toLocaleDateString() : 'New Task';
-
-                // 3. Build Message
-                const message = `${icon} *WorkPulse Update*\n\n` +
-                    `📌 *Task:* ${log.title}\n` +
-                    `📊 *Status:* ${log.priority} | ${log.category}\n` +
-                    `📅 *Update:* ${displayDate} (via ${log.updateChannel})\n` +
-                    `------------------\n` +
-                    `${latestContent || 'No details provided.'}\n` +
-                    `#WorkPulse365 #DHL`;
-
-                // 4. Send to Line
-                const url = `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-            };
-
-
-
-            // --- Render: Update Form Mode ---
-            if (isUpdateMode) {
+            // --- Render: Edit Info Mode ---
+            if (isEditingInfo) {
                 return (
-                    <div className="bg-white p-4 rounded-xl shadow-md border-2 border-dhl-yellow space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-dhl-red font-bold uppercase">Update Log</span>
-                            <button onClick={() => setIsUpdateMode(false)} className="text-xs text-slate-400 hover:text-red-500">Cancel</button>
-                        </div>
+                    <div className="bg-white p-4 rounded-xl shadow-md border-2 border-slate-800 space-y-3">
+                        <div className="text-xs text-slate-800 font-bold uppercase mb-2 border-b pb-2">Edit Task Info</div>
 
-                        {/* SECTION 1: ADD UPDATE */}
-                        <div className="border border-yellow-200 rounded-lg p-3 bg-yellow-50/50 relative">
-                            <h5 className="text-[10px] font-bold text-dhl-red uppercase mb-2">1. Add Progress Update</h5>
-
-                            <div className="flex gap-2 mb-2">
-                                <input type="date" className="flex-1 p-2 bg-white border rounded text-sm outline-none"
-                                    value={updateDate} onChange={e => setUpdateDate(e.target.value)} />
-                                <button type="button" onClick={setToday} className="bg-white border px-3 rounded text-xs font-bold hover:text-dhl-red">Today</button>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 items-center mb-2">
-                                <span className="text-xs text-slate-500">Via:</span>
-                                {['Chat', 'Phone', 'Email', 'Facing', 'App'].map(ch => (
-                                    <button key={ch} onClick={() => setUpdateChannel(ch)}
-                                        className={`px-3 py-1 rounded-full text-xs font-bold border ${updateChannel === ch ? 'bg-slate-800 text-white' : 'bg-white text-slate-400'}`}>
-                                        {ch}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <textarea
-                                className="w-full p-2 bg-white border rounded text-sm min-h-[80px] outline-none mb-2"
-                                placeholder="What happened in this update?"
-                                value={updateContent} onChange={e => setUpdateContent(e.target.value)}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400">Task Title</label>
+                            <input
+                                className="w-full p-2 bg-slate-50 border border-slate-200 rounded font-semibold text-slate-800 focus:ring-2 focus:ring-dhl-yellow outline-none"
+                                value={editTitle}
+                                onChange={e => setEditTitle(e.target.value)}
+                                autoFocus
                             />
-
-                            <button onClick={handleAddProgress} disabled={!updateContent.trim() || !updateChannel} className="w-full py-1.5 bg-dhl-red text-white rounded text-xs font-bold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                Post Update
-                            </button>
                         </div>
 
-                        {/* SECTION 2: EDIT INFO */}
-                        <div className="border border-slate-200 rounded-lg p-3 bg-slate-50 relative">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase mb-2">2. Edit Task Info</h5>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                                <div className="col-span-2 space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Title</label>
-                                    <input
-                                        className="w-full p-2 bg-white border rounded font-semibold text-slate-800 text-sm outline-none focus:border-dhl-red"
-                                        value={editTitle} onChange={e => setEditTitle(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Category</label>
-                                    <select
-                                        value={editCategory} onChange={handleEditCategoryChange}
-                                        className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
-                                        {Object.keys(CATEGORY_MAPPING).map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Application</label>
-                                    <select
-                                        value={editApp} onChange={e => setEditApp(e.target.value)}
-                                        className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
-                                        {(CATEGORY_MAPPING[editCategory] || []).map(a => <option key={a} value={a}>{a}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Priority</label>
-                                    <select
-                                        value={editPriority} onChange={e => setEditPriority(e.target.value)}
-                                        className="w-full p-2 bg-white border rounded text-xs font-bold outline-none">
-                                        {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{k}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Target</label>
-                                    <input
-                                        type="month"
-                                        value={editTargetMonth} onChange={e => setEditTargetMonth(e.target.value)}
-                                        className="w-full p-2 bg-white border rounded text-xs font-bold outline-none"
-                                    />
-                                </div>
-                                <div className="col-span-2 space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Customer</label>
-                                    <input
-                                        value={editCustomer} onChange={e => setEditCustomer(e.target.value)}
-                                        className="w-full p-2 bg-white border rounded text-xs font-bold outline-none"
-                                        placeholder="Customer name (Optional)"
-                                    />
-                                </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400">Category</label>
+                                <select
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-dhl-yellow text-slate-700"
+                                    value={editCategory}
+                                    onChange={handleEditCategoryChange}
+                                >
+                                    {Object.keys(CATEGORY_MAPPING).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
                             </div>
-                            <button onClick={handleSaveMetadata} className="w-full py-1.5 bg-slate-800 text-white rounded text-xs font-bold hover:bg-black transition-colors">
-                                Save Info Changes
-                            </button>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400">Application</label>
+                                <select
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-dhl-yellow text-slate-700"
+                                    value={editApp}
+                                    onChange={e => setEditApp(e.target.value)}
+                                >
+                                    {(CATEGORY_MAPPING[editCategory] || []).map(a => <option key={a} value={a}>{a}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400">Priority</label>
+                                <select
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-dhl-yellow text-slate-700"
+                                    value={editPriority}
+                                    onChange={e => setEditPriority(e.target.value)}
+                                >
+                                    {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{k}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400">Target Month</label>
+                                <input
+                                    type="month"
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-dhl-yellow text-slate-700"
+                                    value={editTargetMonth}
+                                    onChange={e => setEditTargetMonth(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400">Customer</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. K.Somsak"
+                                className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-dhl-yellow text-slate-700"
+                                value={editCustomer}
+                                onChange={e => setEditCustomer(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t mt-4">
+                            <button onClick={(e) => { e.stopPropagation(); setIsEditingInfo(false); }} className="px-3 py-1.5 text-slate-500 text-sm hover:bg-slate-100 rounded font-medium">Cancel</button>
+                            <button onClick={handleSaveInfo} className="px-3 py-1.5 bg-slate-800 text-white rounded text-sm font-bold shadow-sm hover:bg-slate-700 transition-colors">Save Task Info</button>
                         </div>
                     </div>
                 );
@@ -572,40 +467,53 @@
 
             // --- Render: Main Card ---
             return (
-                <div className={`rounded-xl shadow-sm border group transition-all overflow-hidden ${log.status === 'Done' ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white border-slate-100'}`}>
-                    {/* Card Header Content */}
-                    <div className="p-4 relative hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setShowDetail(!showDetail)}>
+                <div
+                    onClick={() => !isExpanded && setIsExpanded(true)}
+                    className={`rounded-xl shadow-sm border transition-all relative overflow-hidden ${log.status === 'Done' && !isExpanded ? 'bg-green-50/50 border-green-200 opacity-75' : 'bg-white'} ${isExpanded ? 'border-dhl-yellow ring-2 ring-yellow-100' : 'border-slate-100 hover:shadow-md cursor-pointer'}`}
+                >
+                    <div className="p-4 relative">
                         <div className="flex justify-between items-start">
-                            <div className="flex-1">
+                            <div className="flex-1 w-full">
                                 {/* Badges */}
                                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-dhl-red uppercase mb-2">
                                     {log.priority && PRIORITIES[log.priority] && (
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] ${PRIORITIES[log.priority].color}`}>{log.priority}</span>
                                     )}
                                     <span className="bg-red-50 px-2 py-0.5 rounded-full">{log.category}</span>
-                                    {log.application && <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border">{log.application}</span>}
+                                    {log.application && <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200">{log.application}</span>}
+
+                                    {log.lastUpdateDate && !isExpanded && (
+                                        <span className="flex items-center gap-1 text-slate-600 normal-case ml-auto sm:ml-0 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-100">
+                                            <span className={`w-2 h-2 rounded-full ${log.updateChannel === 'Email' ? 'bg-blue-400' : log.updateChannel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}></span>
+                                            {(() => {
+                                                try {
+                                                    return new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                                } catch (e) {
+                                                    return 'Invalid Date';
+                                                }
+                                            })()}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Title */}
-                                <h4 className="text-slate-800 font-bold text-lg leading-snug mb-1">{log.title}</h4>
-                                {log.customer && <div className="text-xs font-bold text-slate-400 flex items-center gap-1 mb-2"><span className="w-1 h-1 bg-slate-400 rounded-full"></span> {log.customer}</div>}
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h4 className="text-slate-800 font-bold text-lg leading-snug mb-1">{log.title}</h4>
+                                        {log.customer && <div className="text-xs font-bold text-slate-400 flex items-center gap-1"><span className="w-1 h-1 bg-slate-400 rounded-full"></span> {log.customer}</div>}
+                                    </div>
 
-                                {/* Latest Update & Countdown */}
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                    {log.lastUpdateDate && (
-                                        <div className="flex items-center gap-2 text-xs text-slate-600 bg-yellow-50 p-2 rounded border border-yellow-100">
-                                            <span className="font-bold text-dhl-red">LATEST:</span>
-                                            <span className="flex items-center gap-1">
-                                                {new Date(log.lastUpdateDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                                <span className="opacity-50 mx-1">|</span>
-                                                <span className={`w-2 h-2 rounded-full ${log.updateChannel === 'Email' ? 'bg-blue-400' : log.updateChannel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}></span> {log.updateChannel}
-                                            </span>
-                                        </div>
+                                    {!isExpanded && (
+                                        <button onClick={handleToggleComplete} className={`ml-3 flex-shrink-0 p-2 rounded-full transition-colors ${log.status === 'Done' ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-slate-300 hover:text-green-500 hover:bg-green-50'}`} title={log.status === 'Done' ? "Mark as Open" : "Mark as Done"}>
+                                            <CheckCircle size={20} />
+                                        </button>
                                     )}
+                                </div>
 
-                                    {/* Days Remaining Countdown */}
-                                    {log.status !== 'Done' && (
-                                        (() => {
+                                {/* Days Remaining Countdown (Only when closed) */}
+                                {!isExpanded && log.status !== 'Done' && (
+                                    <div className="mt-3">
+                                        {(() => {
                                             const lastActionDate = log.lastUpdateDate || log.date;
                                             const pDays = PRIORITIES[log.priority]?.days || 30;
                                             const dueDate = addBusinessDays(lastActionDate, pDays);
@@ -626,96 +534,110 @@
 
                                             return (
                                                 <div
-                                                    className={`text-[10px] font-bold px-2 py-1 rounded border flex items-center gap-1 ${colorClass}`}
+                                                    className={`inline-flex text-[10px] font-bold px-2 py-1 rounded border items-center gap-1 ${colorClass}`}
                                                     title={`Target Date: ${dueDate.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (Excl. Weekends)`}
                                                 >
                                                     <span className="text-sm">⏳</span>
                                                     {label}
                                                 </div>
                                             );
-                                        })()
-                                    )}
-                                </div>
-                            </div>
+                                        })()}
+                                    </div>
+                                )}
 
-                            {/* Actions */}
-                            <div className="flex flex-col gap-1 ml-2" onClick={e => e.stopPropagation()}>
-                                <button onClick={handleToggleComplete} className={`p-2 rounded-full transition-colors ${log.status === 'Done' ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-slate-300 hover:text-green-500 hover:bg-green-50'}`} title={log.status === 'Done' ? "Mark as Open" : "Mark as Done"}>
-                                    <CheckCircle size={18} />
-                                </button>
-                                <button onClick={() => setIsUpdateMode(true)} className="text-slate-300 hover:text-dhl-red p-2 hover:bg-red-50 rounded-full transition-colors" title="Update Status">
-                                    <Edit2 size={18} />
-                                </button>
-
-                                <button onClick={() => { if (confirm('Delete this entire log?')) onDelete(log.id); }} className="text-slate-300 hover:text-red-500 p-2 hover:bg-red-50 rounded-full transition-colors" title="Delete">
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Expand Chevron */}
-                        <div className="flex justify-center mt-2 -mb-2 opacity-50">
-                            {showDetail ? <div className="w-12 h-1 bg-slate-200 rounded-full" /> : <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Details</div>}
-                        </div>
-                    </div>
-
-                    {/* Expandable Detail Section */}
-                    {showDetail && (
-                        <div className="bg-slate-50 border-t border-slate-200 p-4 space-y-6 animate-in slide-in-from-top-2">
-                            {/* 1. Main Task Detail */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <h5 className="text-xs font-bold text-slate-400 uppercase">Task Detail</h5>
-                                    {!isEditingMainDetail ? (
-                                        <button onClick={() => setIsEditingMainDetail(true)} className="text-xs text-dhl-red hover:underline font-bold">Edit</button>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            <button onClick={() => setIsEditingMainDetail(false)} className="text-xs text-slate-400">Cancel</button>
-                                            <button onClick={handleUpdateMainDetail} className="text-xs text-dhl-red font-bold">Save</button>
-                                        </div>
-                                    )}
-                                </div>
-                                {isEditingMainDetail ? (
-                                    <textarea
-                                        className="w-full p-2 bg-white border rounded text-sm min-h-[100px] outline-none shadow-inner"
-                                        value={mainDetail} onChange={e => setMainDetail(e.target.value)}
-                                    />
-                                ) : (
-                                    <p className="text-sm text-slate-700 whitespace-pre-line bg-white p-3 rounded border border-slate-200 shadow-sm">
-                                        {log.impact || <span className="text-slate-400 italic">No details provided.</span>}
-                                    </p>
+                                {!isExpanded && log.impact && (
+                                    <div className="text-slate-500 text-sm bg-slate-50 p-2 rounded-lg italic line-clamp-2 mt-3">
+                                        "{log.impact}"
+                                    </div>
                                 )}
                             </div>
+                        </div>
 
-                            {/* 2. Update Log History */}
-                            <div>
-                                <h5 className="text-xs font-bold text-slate-400 uppercase mb-3">Update History</h5>
-                                <div className="space-y-3 pl-2 border-l-2 border-slate-200 ml-1">
-                                    {log.updates && log.updates.length > 0 ? (
-                                        log.updates.map((u, idx) => (
-                                            <div key={idx} className="relative pl-4 group">
-                                                <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 border-2 border-slate-50"></div>
-                                                <div className="text-xs text-slate-500 font-bold flex justify-between items-center mb-1">
-                                                    <div className="flex gap-2">
-                                                        {u.date ? new Date(u.date).toLocaleDateString() : 'Unknown Date'}
-                                                        <span className={`px-1.5 rounded text-[10px] text-white ${u.channel === 'Email' ? 'bg-blue-400' : u.channel === 'Phone' ? 'bg-green-400' : 'bg-purple-400'}`}>{u.channel || 'Chat'}</span>
-                                                    </div>
-                                                    <button onClick={() => handleDeleteUpdate(idx)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity" title="Delete Update">
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                                <p className="text-sm text-slate-700 bg-white p-2 rounded shadow-sm border border-slate-100">
-                                                    {u.content || <span className="opacity-50">No content</span>}
-                                                </p>
+                        {isExpanded && (
+                            <div className="mt-4 pt-4 border-t border-slate-100 animate-in slide-in-from-top-2 duration-200 cursor-default" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-3">
+                                    <div className="text-sm font-bold text-dhl-red uppercase flex items-center gap-1">
+                                        <Edit2 size={14} /> Update Log
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <button onClick={handleToggleComplete} className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 ${log.status === 'Done' ? 'text-green-700 bg-green-100' : 'text-slate-500 bg-slate-100 hover:bg-green-50 hover:text-green-600'}`}>
+                                            <CheckCircle size={14} /> {log.status === 'Done' ? 'Done' : 'Mark Done'}
+                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }} className="text-xs text-slate-400 hover:text-slate-600 font-bold px-2 py-1 bg-slate-100 rounded">Close</button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400">Date Update</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="date"
+                                                    className="flex-1 p-2 bg-slate-50 border rounded text-sm outline-none focus:ring-1 focus:ring-dhl-yellow"
+                                                    value={lastUpdateDate}
+                                                    onChange={e => setLastUpdateDate(e.target.value)}
+                                                />
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="pl-4 text-xs text-slate-400 italic">No update history yet.</div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400">Via</label>
+                                            <select
+                                                className="w-full p-2 bg-slate-50 border rounded text-sm outline-none focus:ring-1 focus:ring-dhl-yellow text-slate-700"
+                                                value={updateChannel}
+                                                onChange={e => setUpdateChannel(e.target.value)}
+                                            >
+                                                {['Chat', 'Phone', 'Email', 'Facing', 'App'].map(ch => (
+                                                    <option key={ch} value={ch}>{ch}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400">Log Details</label>
+                                        <textarea
+                                            className="w-full p-2 bg-slate-50 border rounded text-sm min-h-[80px] focus:ring-2 focus:ring-dhl-yellow outline-none shadow-inner"
+                                            value={editImpact}
+                                            onChange={e => setEditImpact(e.target.value)}
+                                            placeholder="What's the update?"
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={handleUpdateLog}
+                                        className="w-full py-2.5 bg-dhl-yellow text-slate-800 rounded-lg text-sm font-bold shadow-sm hover:bg-yellow-400 transition-colors mt-2"
+                                    >
+                                        Save Update
+                                    </button>
+                                </div>
+
+                                <div className="flex justify-between items-center border-t border-slate-100 mt-6 pt-4">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setIsEditingInfo(true); }}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200 shadow-sm"
+                                    >
+                                        <Edit2 size={16} /> Edit Task Info
+                                    </button>
+
+                                    {onDelete && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm('Are you sure you want to delete this task?')) {
+                                                    onDelete(log.id);
+                                                }
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+                                        >
+                                            <Trash2 size={16} /> Delete Task
+                                        </button>
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             );
         };
