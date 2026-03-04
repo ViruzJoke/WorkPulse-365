@@ -804,7 +804,12 @@
 
                 // 2. App Filter
                 if (filterApp !== 'All') {
-                    result = result.filter(log => log.application === filterApp);
+                    if (filterApp.startsWith('CAT:')) {
+                        const cat = filterApp.replace('CAT:', '');
+                        result = result.filter(log => log.category === cat);
+                    } else {
+                        result = result.filter(log => log.application === filterApp);
+                    }
                 }
 
                 // 3. Sort
@@ -906,20 +911,23 @@
                             </button>
                         </div>
 
-                        {/* Filter Chips */}
-                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                            {ALL_APPS.map(app => (
-                                <button
-                                    key={app}
-                                    onClick={() => setFilterApp(app)}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${filterApp === app
-                                        ? 'bg-slate-800 text-white border-slate-800 shadow-md'
-                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                                        }`}
-                                >
-                                    {app}
-                                </button>
-                            ))}
+                        {/* Filter Dropdown */}
+                        <div className="pb-2">
+                            <select
+                                value={filterApp}
+                                onChange={(e) => setFilterApp(e.target.value)}
+                                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-bold text-slate-700 shadow-sm focus:border-dhl-yellow focus:ring-1 focus:ring-dhl-yellow outline-none cursor-pointer"
+                            >
+                                <option value="All">🌍 All Categories & Apps</option>
+                                {Object.entries(CATEGORY_MAPPING).map(([categoryName, apps]) => (
+                                    <optgroup key={categoryName} label={`🗂️ [${categoryName}]`} className="bg-slate-100 text-slate-500 font-bold uppercase tracking-wider text-xs">
+                                        <option value={`CAT:${categoryName}`} className="text-slate-800 font-bold bg-white normal-case text-sm">↳ All {categoryName}</option>
+                                        {apps.map(app => (
+                                            <option key={app} value={app} className="text-slate-600 bg-white normal-case text-sm">  • {app}</option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
