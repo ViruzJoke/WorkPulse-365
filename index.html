@@ -49,7 +49,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { House, Menu, Send, PlusCircle, Trash2, Edit2, Calendar, List, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User, X, Settings } from 'lucide-react';
+        import { Menu, Send, PlusCircle, Trash2, Edit2, Calendar, LayoutList, PieChart as ChartIcon, Award, TrendingUp, Loader2, Share2, CheckCircle, MessageSquare, LogOut, User, X, Settings } from 'lucide-react';
         import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
         // --- Firebase Imports (Direct from Google CDN for Module) ---
@@ -1471,10 +1471,10 @@
             const NavButtons = ({ vertical = false }) => (
                 <>
                     <button onClick={() => setActiveTab('home')} className={`flex ${vertical ? 'flex-row gap-3 px-4 py-3 w-full hover:bg-slate-100' : 'flex-col justify-center w-full p-2'} items-center rounded-lg transition-all ${activeTab === 'home' ? 'text-dhl-red bg-red-50/50' : 'text-slate-400'}`}>
-                        <House size={24} /> <span className={`font-bold ${vertical ? 'text-sm' : 'text-xs mt-1'}`}>Home</span>
+                        <Menu size={24} /> <span className={`font-bold ${vertical ? 'text-sm' : 'text-xs mt-1'}`}>Home</span>
                     </button>
                     <button onClick={() => setActiveTab('timeline')} className={`flex ${vertical ? 'flex-row gap-3 px-4 py-3 w-full hover:bg-slate-100' : 'flex-col justify-center w-full p-2'} items-center rounded-lg transition-all ${activeTab === 'timeline' ? 'text-dhl-red bg-red-50/50' : 'text-slate-400'}`}>
-                        <List size={24} /> <span className={`font-bold ${vertical ? 'text-sm' : 'text-xs mt-1'}`}>Timeline</span>
+                        <LayoutList size={24} /> <span className={`font-bold ${vertical ? 'text-sm' : 'text-xs mt-1'}`}>Timeline</span>
                     </button>
                     <button onClick={() => setActiveTab('stats')} className={`flex ${vertical ? 'flex-row gap-3 px-4 py-3 w-full hover:bg-slate-100' : 'flex-col justify-center w-full p-2'} items-center rounded-lg transition-all ${activeTab === 'stats' ? 'text-dhl-red bg-red-50/50' : 'text-slate-400'}`}>
                         <ChartIcon size={24} /> <span className={`font-bold ${vertical ? 'text-sm' : 'text-xs mt-1'}`}>Dashboard</span>
