@@ -742,8 +742,19 @@
                 // 1. Status Filter
                 if (statusTab === 'ongoing') {
                     result = result.filter(log => log.status !== 'Done');
-                } else {
+                } else if (statusTab === 'complete') {
                     result = result.filter(log => log.status === 'Done');
+                } else if (statusTab === 'overdue') {
+                    result = result.filter(log => {
+                        if (log.status === 'Done') return false;
+
+                        const lastActionDate = log.lastUpdateDate || log.date;
+                        const pDays = PRIORITIES[log.priority]?.days || 30;
+                        const dueDate = addBusinessDays(lastActionDate, pDays);
+                        const daysLeft = getBusinessDaysLeft(dueDate);
+
+                        return daysLeft < 0; // Negative means overdue
+                    });
                 }
 
                 // 2. App Filter
@@ -820,6 +831,12 @@
                             className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${statusTab === 'ongoing' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Ongoing
+                        </button>
+                        <button
+                            onClick={() => setStatusTab('overdue')}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${statusTab === 'overdue' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Overdue
                         </button>
                         <button
                             onClick={() => setStatusTab('complete')}
