@@ -313,15 +313,8 @@
             const [historyLimit, setHistoryLimit] = useState(3);
 
             // Update Log fields
-            const [editImpact, setEditImpact] = useState(log.impact || '');
-            const [lastUpdateDate, setLastUpdateDate] = useState(() => {
-                if (!log.lastUpdateDate) return new Date().toISOString().split('T')[0]; // Default to today instead of empty
-                try {
-                    return log.lastUpdateDate.split('T')[0];
-                } catch (e) {
-                    return new Date().toISOString().split('T')[0];
-                }
-            });
+            const [editImpact, setEditImpact] = useState('');
+            const [lastUpdateDate, setLastUpdateDate] = useState(() => new Date().toISOString().split('T')[0]);
             const [updateChannel, setUpdateChannel] = useState(log.updateChannel || 'Chat');
 
             // Edit Info fields
@@ -353,6 +346,11 @@
 
             const handleUpdateLog = (e) => {
                 if (e) e.stopPropagation();
+
+                if (!editImpact.trim()) {
+                    alert("Please enter log details before posting.");
+                    return;
+                }
 
                 let currentHistory = Array.isArray(log.history) ? [...log.history] : [];
 
