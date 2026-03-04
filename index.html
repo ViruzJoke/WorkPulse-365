@@ -776,7 +776,7 @@
             );
         };
 
-        const Timeline = ({ logs, onDelete, onUpdate, dateLimit, onLoadAll }) => {
+        const Timeline = ({ logs, onDelete, onUpdate, queryLimit, onLoadAll }) => {
             const [filterApp, setFilterApp] = useState('All');
             const [sortBy, setSortBy] = useState('updated'); // updated | created
             const [statusTab, setStatusTab] = useState('ongoing');
