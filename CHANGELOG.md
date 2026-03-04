@@ -4,9 +4,20 @@ All notable changes to this project will be documented in this file.
 ## [1.3.1] - 2026-03-04
 ### Added
 - **Log History**: Tasks now maintain a chronological history of updates. The update section displays the 3 most recent logs by default with a "Show More" functionality to load older entries.
+- **Delete History Log**: Added ability to selectively delete individual log updates in the Timeline expanded view with a confirmation prompt.
+- **Overdue Tab**: Separated overdue tasks into a dedicated tab on the Timeline.
+
+### Changed
+- **Timeline Filter Dropdown**: Transformed the flat application filter chips into a structured dropdown. Supports filtering parent categories natively.
+- **Mark Done Checkbox**: Repositioned the "Mark Done" circle to remain next to the task title consistently at all times, reducing misclicks.
+- **Default Worklog Load**: Increased initial query limit from 10 to 30 to give better retroactive visibility without missing un-updated ongoing tasks.
 
 ### Fixed
 - **Vercel Deployments**: Fixed an issue where Vercel deployments stopped syncing due to the Git repository being made private.
+- **Auto Update Date**: Re-updating a task now defaults the form's `lastUpdateDate` immediately to *Today*, fixing the bug where the date locked to the oldest history.
+- **Line Notify Due Dates (`AUTOMATION_CODE.js`)**: Shifted backend script overdue logic to skip weekends (Business Days), effectively aligning completely with the website's calculation constraint.
+- **Legacy Log Bug Fix**: Fixed an issue preventing crashes resulting from undefined arrays on older legacy documents while pressing "Show More".
+- **Empty Update Form Override**: Added an alert intercept to prevent users from blindly saving empty update entries.
 
 ## [1.3.0] - 2026-01-15 (Afternoon Update)
 
