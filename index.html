@@ -354,7 +354,19 @@
             const handleUpdateLog = (e) => {
                 if (e) e.stopPropagation();
 
-                const currentHistory = Array.isArray(log.history) ? log.history : [];
+                let currentHistory = Array.isArray(log.history) ? [...log.history] : [];
+
+                // Preserve the legacy existing log.impact as the oldest history entry on the first update
+                if (currentHistory.length === 0 && log.impact && log.impact.trim() !== '') {
+                    currentHistory.push({
+                        id: 'legacy-first-log',
+                        impact: log.impact,
+                        date: log.lastUpdateDate || log.date || log.createdAt,
+                        channel: log.updateChannel || 'Unknown',
+                        createdAt: log.createdAt || new Date().toISOString()
+                    });
+                }
+
                 const newHistoryRecord = {
                     id: Date.now().toString(),
                     impact: editImpact,
