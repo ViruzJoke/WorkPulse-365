@@ -1,6 +1,13 @@
 # Changelog - WorkPulse 365
 
 All notable changes to this project will be documented in this file.
+## [1.3.1] - 2026-03-04
+### Added
+- **Log History**: Tasks now maintain a chronological history of updates. The update section displays the 3 most recent logs by default with a "Show More" functionality to load older entries.
+
+### Fixed
+- **Vercel Deployments**: Fixed an issue where Vercel deployments stopped syncing due to the Git repository being made private.
+
 ## [1.3.0] - 2026-01-15 (Afternoon Update)
 
 ### Added
