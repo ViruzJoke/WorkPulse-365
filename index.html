@@ -730,7 +730,7 @@
                                                     </div>
                                                 ))}
 
-                                                {log.history.length > historyLimit && (
+                                                {displayHistory.length > historyLimit && (
                                                     <div className="text-center pt-2">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setHistoryLimit(prev => prev + 3); }}
