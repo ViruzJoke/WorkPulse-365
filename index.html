@@ -775,7 +775,7 @@
             );
         };
 
-        const Timeline = ({ logs, onDelete, onUpdate, queryLimit, onLoadAll }) => {
+        const Timeline = ({ logs, onDelete, onUpdate, dateLimit, onLoadAll }) => {
             const [filterApp, setFilterApp] = useState('All');
             const [sortBy, setSortBy] = useState('updated'); // updated | created
             const [statusTab, setStatusTab] = useState('ongoing');
@@ -918,15 +918,17 @@
                                 onChange={(e) => setFilterApp(e.target.value)}
                                 className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-bold text-slate-700 shadow-sm focus:border-dhl-yellow focus:ring-1 focus:ring-dhl-yellow outline-none cursor-pointer"
                             >
-                                <option value="All">🌍 All Categories & Apps</option>
-                                {Object.entries(CATEGORY_MAPPING).map(([categoryName, apps]) => (
-                                    <optgroup key={categoryName} label={`🗂️ [${categoryName}]`} className="bg-slate-100 text-slate-500 font-bold uppercase tracking-wider text-xs">
-                                        <option value={`CAT:${categoryName}`} className="text-slate-800 font-bold bg-white normal-case text-sm">↳ All {categoryName}</option>
-                                        {apps.map(app => (
-                                            <option key={app} value={app} className="text-slate-600 bg-white normal-case text-sm">  • {app}</option>
-                                        ))}
-                                    </optgroup>
-                                ))}
+                                <option value="All">🌍 All Tasks</option>
+                                {Object.entries(CATEGORY_MAPPING).map(([categoryName, apps]) => [
+                                    <option key={`cat-${categoryName}`} value={`CAT:${categoryName}`} className="text-slate-800 font-extrabold bg-slate-100 uppercase tracking-wider text-xs">
+                                        🗂️ {categoryName}
+                                    </option>,
+                                    ...apps.map(app => (
+                                        <option key={app} value={app} className="text-slate-600 bg-white font-medium text-sm">
+                                            &nbsp;&nbsp;&nbsp;• {app}
+                                        </option>
+                                    ))
+                                ])}
                             </select>
                         </div>
                     </div>
@@ -949,9 +951,9 @@
                             ))}
 
                             {/* Load All Button */}
-                            {queryLimit && (
+                            {dateLimit && (
                                 <div className="pt-4 text-center">
-                                    <div className="text-xs text-slate-400 mb-2">Showing limited recent items</div>
+                                    <div className="text-xs text-slate-400 mb-2">Showing tasks from the last {dateLimit} days</div>
                                     <button
                                         onClick={onLoadAll}
                                         className="bg-slate-100 text-slate-600 px-6 py-2 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm border border-slate-200"
@@ -1277,7 +1279,7 @@
                                 <select
                                     value={defaultCategory}
                                     onChange={e => setDefaultCategory(e.target.value)}
-                                    className="w-full p-3 bg-white border rounded-lg text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-dhl-red"
+                                    className="w-full p-3 bg-white border rounded-lg text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-dhl-red"
                                 >
                                     {Object.keys(CATEGORY_MAPPING).map(c => (
                                         <option key={c} value={c}>{c}</option>
@@ -1340,7 +1342,7 @@
             const [loading, setLoading] = useState(true);
             const [authLoading, setAuthLoading] = useState(true);
             const [error, setError] = useState('');
-            const [queryLimit, setQueryLimit] = useState(10); // Limit initial reads
+            const [dateLimit, setDateLimit] = useState(14); // 14 days default limit
 
             const handleLogin = async () => {
                 try {
@@ -1381,8 +1383,10 @@
                     orderBy('date', 'desc')
                 );
 
-                if (queryLimit) {
-                    q = query(q, limit(queryLimit));
+                if (dateLimit) {
+                    const limitDate = new Date();
+                    limitDate.setDate(limitDate.getDate() - dateLimit);
+                    q = query(q, where('date', '>=', limitDate.toISOString().split('T')[0]));
                 }
 
                 const unsubLogs = onSnapshot(q, s => {
@@ -1421,7 +1425,7 @@
                     setLoading(false);
                 });
                 return () => unsubLogs();
-            }, [user, queryLimit]);
+            }, [user, dateLimit]);
 
             const handleAdd = async (data) => {
                 if (user) await addDoc(collection(db, 'artifacts', 'workpulse-365', 'users', user.uid, 'worklogs'), { ...data, userId: user.uid });
@@ -1556,14 +1560,14 @@
                                                 </div>
                                             </div>
                                         )}
-                                        {activeTab === 'timeline' && <Timeline logs={logs} onDelete={handleDelete} onUpdate={handleUpdate} queryLimit={queryLimit} onLoadAll={() => setQueryLimit(null)} />}
+                                        {activeTab === 'timeline' && <Timeline logs={logs} onDelete={handleDelete} onUpdate={handleUpdate} dateLimit={dateLimit} onLoadAll={() => setDateLimit(null)} />}
                                         {activeTab === 'stats' && (
                                             <>
-                                                {queryLimit && (
-                                                    <div onClick={() => setQueryLimit(null)} className="bg-yellow-50 border border-yellow-200 p-2 mb-4 rounded-lg text-center cursor-pointer hover:bg-yellow-100 transition-colors">
-                                                        <p className="text-xs text-yellow-700 font-bold flex items-center justify-center gap-2">
-                                                            <TrendingUp size={14} /> Stats based on recent {queryLimit} items. Click to Load All.
-                                                        </p>
+                                                {dateLimit && (
+                                                    <div onClick={() => setDateLimit(null)} className="bg-yellow-50 border border-yellow-200 p-2 mb-4 rounded-lg text-center cursor-pointer hover:bg-yellow-100 transition-colors">
+                                                        <span className="text-xs font-bold text-yellow-700 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                                                            <TrendingUp size={14} /> Only showing last {dateLimit} days to save resources. Click to Load All.
+                                                        </span>
                                                     </div>
                                                 )}
                                                 <Dashboard logs={logs} />
