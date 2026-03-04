@@ -356,15 +356,18 @@
 
                 let currentHistory = Array.isArray(log.history) ? [...log.history] : [];
 
-                // Preserve the legacy existing log.impact as the oldest history entry on the first update
-                if (currentHistory.length === 0 && log.impact && log.impact.trim() !== '') {
-                    currentHistory.push({
-                        id: 'legacy-first-log',
-                        impact: log.impact,
-                        date: log.lastUpdateDate || log.date || log.createdAt,
-                        channel: log.updateChannel || 'Unknown',
-                        createdAt: log.createdAt || new Date().toISOString()
-                    });
+                // Preserve the legacy existing log.impact as the oldest history entry
+                if (log.impact && log.impact.trim() !== '') {
+                    const isImpactInHistory = currentHistory.some(h => h.impact === log.impact);
+                    if (!isImpactInHistory) {
+                        currentHistory.push({
+                            id: 'legacy-first-log',
+                            impact: log.impact,
+                            date: log.lastUpdateDate || log.date || log.createdAt,
+                            channel: log.updateChannel || 'Unknown',
+                            createdAt: log.createdAt || new Date().toISOString()
+                        });
+                    }
                 }
 
                 const newHistoryRecord = {
@@ -644,15 +647,18 @@
 
                                 {/* Log History Section */}
                                 {(() => {
-                                    // Combine existing history array with the legacy single impact if it exists and history is empty
+                                    // Combine existing history array with the legacy single impact if it is not already included
                                     let displayHistory = Array.isArray(log.history) ? [...log.history] : [];
-                                    if (displayHistory.length === 0 && log.impact && log.impact.trim() !== '') {
-                                        displayHistory.push({
-                                            id: 'legacy-first-log',
-                                            impact: log.impact,
-                                            date: log.lastUpdateDate || log.date || log.createdAt,
-                                            channel: log.updateChannel || 'Unknown'
-                                        });
+                                    if (log.impact && log.impact.trim() !== '') {
+                                        const isImpactInHistory = displayHistory.some(h => h.impact === log.impact);
+                                        if (!isImpactInHistory) {
+                                            displayHistory.push({
+                                                id: 'legacy-first-log',
+                                                impact: log.impact,
+                                                date: log.lastUpdateDate || log.date || log.createdAt,
+                                                channel: log.updateChannel || 'Unknown'
+                                            });
+                                        }
                                     }
 
                                     if (displayHistory.length === 0) return null;
