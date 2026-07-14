@@ -18,6 +18,7 @@ export default function App() {
   const [authError, setAuthError] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [quickBuyThreshold, setQuickBuyThreshold] = useState('');
+  const [currentMode, setCurrentMode] = useState('Personal');
 
   // ---------- Google Sign‑In ----------
   const handleGoogleSignIn = async () => {
@@ -55,9 +56,11 @@ export default function App() {
         setLoading(false);
       }
     });
-    // Load quick buy threshold from localStorage once on mount
+    // Load quick buy threshold and mode from localStorage once on mount
     const storedThreshold = localStorage.getItem('quick_buy_threshold');
     if (storedThreshold) setQuickBuyThreshold(storedThreshold);
+    const storedMode = localStorage.getItem('wishlist_mode');
+    if (storedMode) setCurrentMode(storedMode);
     return () => unsubscribe();
   }, []);
 
@@ -107,6 +110,12 @@ export default function App() {
     localStorage.setItem('quick_buy_threshold', value);
   };
 
+  // Handle mode change from Settings
+  const handleModeChange = (mode) => {
+    setCurrentMode(mode);
+    localStorage.setItem('wishlist_mode', mode);
+  };
+
   // Undo a purchase (move back to active wishlist)
   const handleRedo = async (id) => {
     if (!user) return;
@@ -121,7 +130,7 @@ export default function App() {
 
       <Header onSettingsClick={() => setShowSettings(true)} user={user} onSignOut={handleSignOut} />
 
-      {showSettings && <Settings onClose={() => setShowSettings(false)} onThresholdChange={handleThresholdChange} />}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} onThresholdChange={handleThresholdChange} onModeChange={handleModeChange} />}
 
       <main className="max-w-md mx-auto p-4 relative z-10">
         {loading ? (
@@ -172,6 +181,7 @@ export default function App() {
                   onArchive={handleArchive}
                   onRedo={handleRedo}
                   quickBuyThreshold={quickBuyThreshold}
+                  currentMode={currentMode}
                 />
               </div>
             )}

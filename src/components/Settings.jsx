@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, ArrowLeft } from 'lucide-react';
 
-export default function Settings({ onClose, onThresholdChange }) {
+export default function Settings({ onClose, onThresholdChange, onModeChange }) {
     const [googleScriptUrl, setGoogleScriptUrl] = useState('');
+    const [mode, setMode] = useState('Personal');
     const [quickBuyThreshold, setQuickBuyThreshold] = useState('');
     const [showGasUrl, setShowGasUrl] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -13,12 +14,16 @@ export default function Settings({ onClose, onThresholdChange }) {
         if (storedUrl) setGoogleScriptUrl(storedUrl);
         const storedThreshold = localStorage.getItem('quick_buy_threshold');
         if (storedThreshold) setQuickBuyThreshold(storedThreshold);
+        const storedMode = localStorage.getItem('wishlist_mode');
+        if (storedMode) setMode(storedMode);
     }, []);
 
     const handleSave = () => {
         setLoading(true);
         localStorage.setItem('google_script_url', googleScriptUrl);
         localStorage.setItem('quick_buy_threshold', quickBuyThreshold);
+        localStorage.setItem('wishlist_mode', mode);
+        if (onModeChange) onModeChange(mode);
         setTimeout(() => {
             setLoading(false);
             setSaved(true);
@@ -85,6 +90,19 @@ export default function Settings({ onClose, onThresholdChange }) {
                                     >
                                         {showGasUrl ? 'Hide URL' : 'Show / Edit'}
                                     </button>
+                                </div>
+                                
+                                {/* Mode Settings */}
+                                <div className="mt-4 border-t border-slate-100 pt-4">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Mode</label>
+                                    <select
+                                        value={mode}
+                                        onChange={(e) => setMode(e.target.value)}
+                                        className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
+                                    >
+                                        <option value="Personal">Personal</option>
+                                        <option value="Family">Family</option>
+                                    </select>
                                 </div>
                                 
                                 {showGasUrl && (
