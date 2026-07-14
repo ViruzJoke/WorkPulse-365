@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { signOut } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
@@ -89,6 +90,14 @@ export default function App() {
     sendLineNotification(itemData);
   };
 
+  // Sign‑out handler
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setUser(null);
+    // optional: clear any stored tokens (e.g., LINE Notify)
+    localStorage.removeItem('line_notify_token');
+  };
+
   const handleDelete = async (id) => {
     if (!user) return;
     if (window.confirm('Are you sure you want to remove this item?')) {
@@ -102,7 +111,7 @@ export default function App() {
       {/* Background Decorations */}
       <div className="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-brand-100/40 to-transparent pointer-events-none z-0"></div>
 
-      <Header onSettingsClick={() => setShowSettings(true)} />
+      <Header onSettingsClick={() => setShowSettings(true)} user={user} onSignOut={handleSignOut} />
 
       {showSettings && <Settings onClose={() => setShowSettings(false)} />}
 

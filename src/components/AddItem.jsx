@@ -32,12 +32,11 @@ export default function AddItem({ onAdd }) {
         let imageUrl = null;
         if (imageFile) {
             try {
-                const imageRef = ref(storage, `wishlist/${Date.now()}_${imageFile.name}`);
-                const snapshot = await uploadBytes(imageRef, imageFile);
-                imageUrl = await getDownloadURL(snapshot.ref);
+                // Convert the file to a Base64 data URL and store it directly in the document
+                imageUrl = await convertToBase64(imageFile);
             } catch (err) {
-                console.error("Error uploading image:", err);
-                alert("Failed to upload image. Please check your Firebase Storage rules.");
+                console.error("Error converting image to Base64:", err);
+                alert("Failed to process image. Please try a smaller file.");
                 setLoading(false);
                 return;
             }
