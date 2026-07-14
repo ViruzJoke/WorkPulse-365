@@ -7,16 +7,29 @@ export default {
     theme: {
         extend: {
             colors: {
-                dhl: {
-                    yellow: '#FFCC00',
-                    red: '#D40511',
+                brand: {
+                    50: '#f0fdfa',
+                    100: '#ccfbf1',
+                    200: '#99f6e4',
+                    300: '#5eead4',
+                    400: '#2dd4bf',
+                    500: '#14b8a6', // teal-500
+                    600: '#0d9488',
+                    700: '#0f766e',
+                    800: '#115e59',
+                    900: '#134e4a',
                 },
-                slate: {
-                    900: '#0f172a', // Ensure standard slate is available if not default
+                accent: {
+                    500: '#f43f5e', // rose-500
+                    600: '#e11d48',
                 }
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['Outfit', 'system-ui', 'sans-serif'],
+            },
+            boxShadow: {
+                'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                'glass-sm': '0 4px 16px 0 rgba(31, 38, 135, 0.05)',
             }
         },
     },

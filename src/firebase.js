@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // TODO: Replace with your actual Firebase configuration
 const firebaseConfig = {
@@ -15,13 +16,15 @@ const firebaseConfig = {
 let app;
 let auth;
 let db;
+let storage;
 
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    storage = getStorage(app);
 } catch (error) {
     console.error("Firebase initialization failed. Make sure to update src/firebase.js with your keys.", error);
 }
 
-export { auth, db };
+export { auth, db, storage };
