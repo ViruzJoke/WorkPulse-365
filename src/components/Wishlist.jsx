@@ -9,7 +9,7 @@ const CATEGORY_STYLES = {
     'Want': 'text-slate-600 bg-slate-100 border-slate-200'
 };
 
-export default function Wishlist({ items, onDelete, onEdit, onArchive, onRedo, quickBuyThreshold }) {
+export default function Wishlist({ items, onDelete, onEdit, onArchive, onRedo, quickBuyThreshold, currentMode, onModeChange }) {
     const [selectedItem, setSelectedItem] = useState(null);
     const [viewMode, setViewMode] = useState(null); // 'image' or 'edit'
     
@@ -17,6 +17,10 @@ export default function Wishlist({ items, onDelete, onEdit, onArchive, onRedo, q
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [quickBuyActive, setQuickBuyActive] = useState(false);
     const [historyExpanded, setHistoryExpanded] = useState(false);
+    // Mode filter (uses global currentMode)
+    const handleModeClick = (mode) => {
+        if (onModeChange) onModeChange(mode);
+    };
 
     const handleImageClick = (item) => {
         setSelectedItem(item);
@@ -34,8 +38,8 @@ export default function Wishlist({ items, onDelete, onEdit, onArchive, onRedo, q
     };
 
     // Partition items into active vs bought
-    const activeItems = items.filter(item => !item.bought);
-    const boughtItems = items.filter(item => item.bought);
+    const activeItems = items.filter(item => !item.bought && item.mode === currentMode);
+    const boughtItems = items.filter(item => item.bought && item.mode === currentMode);
 
     // Apply active wishlist filters
     const filteredActiveItems = activeItems.filter(item => {
@@ -46,7 +50,25 @@ export default function Wishlist({ items, onDelete, onEdit, onArchive, onRedo, q
 
     return (
         <div className="space-y-4 pb-10">
-            {/* Filters panel */}
+            {/* Mode Switch */}
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => handleModeClick('Personal')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        currentMode === 'Personal' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white/80 text-slate-500 border border-slate-200/60 hover:bg-slate-50'
+                    }`}
+                >
+                    Personal
+                </button>
+                <button
+                    onClick={() => handleModeClick('Family')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        currentMode === 'Family' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white/80 text-slate-500 border border-slate-200/60 hover:bg-slate-50'
+                    }`}
+                >
+                    Family
+                </button>
+            </div>
             <div className="flex flex-col gap-3 bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200/50 shadow-glass-sm">
                 <div className="flex flex-wrap gap-1.5">
                     {['All', 'Need', 'Normal', 'Want'].map(cat => (

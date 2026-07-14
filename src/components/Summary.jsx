@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = {
@@ -7,8 +7,8 @@ const COLORS = {
     'Want': '#94a3b8'  // slate-400
 };
 
-export default function Summary({ items }) {
-    const activeItems = useMemo(() => items.filter(i => !i.bought), [items]);
+export default function Summary({ items, currentMode, onModeChange }) {
+    const activeItems = useMemo(() => items.filter(i => !i.bought && i.mode === currentMode), [items, currentMode]);
 
     const { chartData, totals, grandTotal } = useMemo(() => {
         const catTotals = { Need: 0, Normal: 0, Want: 0 };
@@ -35,7 +35,7 @@ export default function Summary({ items }) {
 
     const monthlyStats = useMemo(() => {
         const stats = {}; // key: "YYYY-MM", value: sum
-        const bought = items.filter(i => i.bought && i.boughtDate);
+        const bought = items.filter(i => i.bought && i.boughtDate && i.mode === currentMode);
         bought.forEach(item => {
             const [year, monthStr] = item.boughtDate.split('-');
             const key = `${year}-${monthStr}`;
@@ -56,10 +56,29 @@ export default function Summary({ items }) {
                 amount: stats[key]
             };
         });
-    }, [items]);
+    }, [items, currentMode]);
 
     return (
         <div className="space-y-6 pb-10">
+            {/* Mode Switch */}
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => onModeChange('Personal')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        currentMode === 'Personal' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white/80 text-slate-500 border border-slate-200/60 hover:bg-slate-50'
+                    }`}
+                >
+                    Personal
+                </button>
+                <button
+                    onClick={() => onModeChange('Family')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        currentMode === 'Family' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white/80 text-slate-500 border border-slate-200/60 hover:bg-slate-50'
+                    }`}
+                >
+                    Family
+                </button>
+            </div>
             <div className="glass-panel rounded-3xl p-8 text-center relative overflow-hidden">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-400/20 rounded-full blur-2xl"></div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent-400/20 rounded-full blur-2xl"></div>
@@ -142,7 +161,8 @@ export default function Summary({ items }) {
                             alert('Google Apps Script URL not set in Settings.');
                             return;
                         }
-                        fetch(scriptUrl, { method: 'GET' })
+                        const urlWithMode = `${scriptUrl}?mode=${currentMode}`;
+                        fetch(urlWithMode, { method: 'GET' })
                             .then(res => res.text())
                             .then(text => alert('Notification Sent! Response: ' + text))
                             .catch(err => {

@@ -182,13 +182,14 @@ export default function App() {
                   onRedo={handleRedo}
                   quickBuyThreshold={quickBuyThreshold}
                   currentMode={currentMode}
+                  onModeChange={handleModeChange}
                 />
               </div>
             )}
             {activeTab === 'summary' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <h2 className="text-xl font-bold text-slate-800 mb-4 px-2">Dashboard</h2>
-                <Summary items={items} />
+                <Summary items={items} currentMode={currentMode} onModeChange={handleModeChange} />
               </div>
             )}
           </>
