@@ -9,6 +9,7 @@ export default function EditItemModal({ item, onClose, onSave }) {
     const [imageUrl, setImageUrl] = useState(item.imageUrl || '');
     const [url, setUrl] = useState(item.url || '');
     const [saving, setSaving] = useState(false);
+    const [mode, setMode] = useState(item.mode || 'Personal');
 
     const priceInputRef = useRef(null);
 
@@ -48,7 +49,7 @@ export default function EditItemModal({ item, onClose, onSave }) {
         e.preventDefault();
         setSaving(true);
         try {
-            await onSave(item.id, { title, price: Number(price), category, imageUrl, url });
+            await onSave(item.id, { title, price: Number(price), category, imageUrl, url, mode });
             onClose();
         } catch (error) {
             console.error('Error saving item:', error);
@@ -103,6 +104,15 @@ export default function EditItemModal({ item, onClose, onSave }) {
                                 <option value="Normal">Normal (Want soon)</option>
                                 <option value="Want">Want (Maybe later)</option>
                             </select>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Mode</label>
+                        <select
+                            value={mode}
+                            onChange={(e) => setMode(e.target.value)}
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-medium"
+                        >
+                            <option value="Personal">Personal</option>
+                            <option value="Family">Family</option>
+                        </select>
                         </div>
                     </div>
 

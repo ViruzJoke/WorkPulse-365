@@ -16,6 +16,7 @@ export default function AddItem({ onAdd }) {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [mode, setMode] = useState('Personal');
 
     const priceInputRef = useRef(null);
 
@@ -66,6 +67,7 @@ export default function AddItem({ onAdd }) {
             category,
             imageUrl,
             url,
+            mode,
             date: new Date().toISOString(),
             createdAt: new Date(),
         });
@@ -123,6 +125,15 @@ export default function AddItem({ onAdd }) {
                             {CATEGORIES.map(cat => (
                                 <option key={cat.id} value={cat.id}>{cat.label}</option>
                             ))}
+                        </select>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Mode</label>
+                        <select
+                            value={mode}
+                            onChange={(e) => setMode(e.target.value)}
+                            className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
+                        >
+                            <option value="Personal">Personal</option>
+                            <option value="Family">Family</option>
                         </select>
                     </div>
                 </div>
