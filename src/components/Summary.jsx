@@ -41,40 +41,62 @@ export default function Summary({ items }) {
                 <h2 className="text-5xl font-black text-slate-800 tracking-tight relative z-10">
                     ฿{grandTotal.toLocaleString()}
                 </h2>
-                <button
-                    onClick={() => {
-                        const token = localStorage.getItem('line_notify_token');
-                        if (!token) {
-                            alert('LINE token not set in Settings.');
-                            return;
-                        }
-                        const messageLines = items.map(item => `• ${item.title} (${item.category}) – ฿${Number(item.price).toLocaleString()}`);
-                        const message = `🌟 Wishlist Summary\nTotal: ฿${grandTotal.toLocaleString()}\n\n${messageLines.join('\n')}`;
-                        const proxyUrl = 'https://corsproxy.io/?';
-                        const targetUrl = 'https://notify-api.line.me/api/notify';
-                        const formData = new URLSearchParams();
-                        formData.append('message', message);
-                        fetch(proxyUrl + encodeURIComponent(targetUrl), {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: formData,
-                        })
-                            .then(res => {
-                                if (!res.ok) throw new Error('Failed to send');
-                                alert('LINE notification sent!');
+                <div className="flex flex-col gap-2 mt-4 max-w-xs mx-auto">
+                    <button
+                        onClick={() => {
+                            const token = localStorage.getItem('line_notify_token');
+                            if (!token) {
+                                alert('LINE token not set in Settings.');
+                                return;
+                            }
+                            const messageLines = items.map(item => `• ${item.title} (${item.category}) – ฿${Number(item.price).toLocaleString()}`);
+                            const message = `🌟 Wishlist Summary\nTotal: ฿${grandTotal.toLocaleString()}\n\n${messageLines.join('\n')}`;
+                            const proxyUrl = 'https://corsproxy.io/?';
+                            const targetUrl = 'https://notify-api.line.me/api/notify';
+                            const formData = new URLSearchParams();
+                            formData.append('message', message);
+                            fetch(proxyUrl + encodeURIComponent(targetUrl), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    Authorization: `Bearer ${token}`,
+                                },
+                                body: formData,
                             })
-                            .catch(err => {
-                                console.error(err);
-                                alert('Error sending LINE notification');
-                            });
-                    }}
-                    className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-                >
-                    Send now
-                </button>
+                                .then(res => {
+                                    if (!res.ok) throw new Error('Failed to send');
+                                    alert('LINE notification sent!');
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    alert('Error sending LINE notification');
+                                });
+                        }}
+                        className="w-full px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
+                    >
+                        Send detail to LINE
+                    </button>
+                    
+                    <button
+                        onClick={() => {
+                            const scriptUrl = localStorage.getItem('google_script_url');
+                            if (!scriptUrl) {
+                                alert('Google Apps Script URL not set in Settings.');
+                                return;
+                            }
+                            fetch(scriptUrl, { method: 'GET' })
+                                .then(res => res.text())
+                                .then(text => alert('Automation Triggered! Response: ' + text))
+                                .catch(err => {
+                                    console.error(err);
+                                    alert('Error triggering Google Apps Script: ' + err.message);
+                                });
+                        }}
+                        className="w-full px-4 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-sm"
+                    >
+                        Trigger Automation
+                    </button>
+                </div>
             </div>
 
             {chartData.length > 0 ? (

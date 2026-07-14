@@ -10,23 +10,23 @@ const CATEGORY_STYLES = {
 };
 
 export default function Wishlist({ items, onDelete, onEdit }) {
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [viewMode, setViewMode] = useState(null); // 'image' or 'edit'
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [viewMode, setViewMode] = useState(null); // 'image' or 'edit'
 
-  const handleImageClick = (item) => {
-    setSelectedItem(item);
-    setViewMode('image');
-  };
+    const handleImageClick = (item) => {
+        setSelectedItem(item);
+        setViewMode('image');
+    };
 
-  const handleTitleClick = (item) => {
-    setSelectedItem(item);
-    setViewMode('edit');
-  };
+    const handleTitleClick = (item) => {
+        setSelectedItem(item);
+        setViewMode('edit');
+    };
 
-  const closeModal = () => {
-    setSelectedItem(null);
-    setViewMode(null);
-  };
+    const closeModal = () => {
+        setSelectedItem(null);
+        setViewMode(null);
+    };
     if (items.length === 0) {
         return (
             <div className="text-center p-10 text-slate-400 glass-panel rounded-2xl border border-dashed border-slate-300">
@@ -48,7 +48,7 @@ export default function Wishlist({ items, onDelete, onEdit }) {
                             <ImageIcon className="text-slate-300" size={28} />
                         )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                             <div>
@@ -64,7 +64,7 @@ export default function Wishlist({ items, onDelete, onEdit }) {
                             </span>
                         </div>
                     </div>
-                    
+
                     <button
                         onClick={() => onDelete(item.id)}
                         className="p-2.5 text-slate-300 hover:text-white hover:bg-red-500 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm shadow-red-500/0 hover:shadow-red-500/30"
@@ -80,7 +80,7 @@ export default function Wishlist({ items, onDelete, onEdit }) {
             )}
 
             {selectedItem && viewMode === 'edit' && (
-                <EditItemModal item={selectedItem} onClose={closeModal} />
+                <EditItemModal item={selectedItem} onClose={closeModal} onSave={onEdit} />
             )}
         </div>
     );

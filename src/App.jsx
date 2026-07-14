@@ -106,6 +106,12 @@ export default function App() {
     }
   };
 
+  const handleEdit = async (id, updatedData) => {
+    if (!user) return;
+    const itemRef = doc(db, 'artifacts', 'mywishlist-9ba95', 'users', user.uid, 'wishlist', id);
+    await updateDoc(itemRef, updatedData);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 relative overflow-hidden">
       {/* Background Decorations */}
@@ -157,7 +163,7 @@ export default function App() {
                     {items.length} total
                   </span>
                 </div>
-                <Wishlist items={items} onDelete={handleDelete} />
+                <Wishlist items={items} onDelete={handleDelete} onEdit={handleEdit} />
               </div>
             )}
             {activeTab === 'summary' && (

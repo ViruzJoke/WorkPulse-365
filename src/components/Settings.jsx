@@ -3,17 +3,21 @@ import { Save, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function Settings({ onClose }) {
     const [lineToken, setLineToken] = useState('');
+    const [googleScriptUrl, setGoogleScriptUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem('line_notify_token');
-        if (stored) setLineToken(stored);
+        const storedToken = localStorage.getItem('line_notify_token');
+        if (storedToken) setLineToken(storedToken);
+        const storedUrl = localStorage.getItem('google_script_url');
+        if (storedUrl) setGoogleScriptUrl(storedUrl);
     }, []);
 
     const handleSave = () => {
         setLoading(true);
         localStorage.setItem('line_notify_token', lineToken);
+        localStorage.setItem('google_script_url', googleScriptUrl);
         setTimeout(() => {
             setLoading(false);
             setSaved(true);
@@ -53,6 +57,20 @@ export default function Settings({ onClose }) {
                                     You can get this from <a href="https://notify-bot.line.me/" target="_blank" rel="noreferrer" className="text-brand-600 font-semibold hover:underline">LINE Notify</a>. 
                                     <br/><br/>
                                     Note: We use a public proxy to bypass CORS restrictions.
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Google Apps Script URL (Automation Trigger)</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://script.google.com/macros/s/.../exec"
+                                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
+                                    value={googleScriptUrl}
+                                    onChange={(e) => setGoogleScriptUrl(e.target.value)}
+                                />
+                                <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+                                    This URL will be called to trigger your custom Google Apps Script automation.
                                 </p>
                             </div>
                             
