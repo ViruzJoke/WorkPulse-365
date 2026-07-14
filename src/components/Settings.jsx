@@ -2,21 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Save, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function Settings({ onClose }) {
-    const [lineToken, setLineToken] = useState('');
     const [googleScriptUrl, setGoogleScriptUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('line_notify_token');
-        if (storedToken) setLineToken(storedToken);
         const storedUrl = localStorage.getItem('google_script_url');
         if (storedUrl) setGoogleScriptUrl(storedUrl);
     }, []);
 
     const handleSave = () => {
         setLoading(true);
-        localStorage.setItem('line_notify_token', lineToken);
         localStorage.setItem('google_script_url', googleScriptUrl);
         setTimeout(() => {
             setLoading(false);
@@ -39,29 +35,13 @@ export default function Settings({ onClose }) {
 
                 <div className="p-6 space-y-8">
                     <div className="glass-panel rounded-2xl p-6 shadow-glass-sm">
-                        <h2 className="text-lg font-bold text-slate-800 mb-2">LINE Notification</h2>
+                        <h2 className="text-lg font-bold text-slate-800 mb-2">Google Apps Script Configuration</h2>
                         <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-                            Enter your LINE Notify token to receive alerts when a new item is added to your wishlist.
+                            Configure your Google Apps Script Webhook URL to trigger custom automations.
                         </p>
                         <div className="space-y-5">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">LINE Notify Token</label>
-                                <input
-                                    type="password"
-                                    placeholder="Enter token here..."
-                                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
-                                    value={lineToken}
-                                    onChange={(e) => setLineToken(e.target.value)}
-                                />
-                                <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-                                    You can get this from <a href="https://notify-bot.line.me/" target="_blank" rel="noreferrer" className="text-brand-600 font-semibold hover:underline">LINE Notify</a>. 
-                                    <br/><br/>
-                                    Note: We use a public proxy to bypass CORS restrictions.
-                                </p>
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Google Apps Script URL (Automation Trigger)</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Google Apps Script URL</label>
                                 <input
                                     type="url"
                                     placeholder="https://script.google.com/macros/s/.../exec"
@@ -70,7 +50,7 @@ export default function Settings({ onClose }) {
                                     onChange={(e) => setGoogleScriptUrl(e.target.value)}
                                 />
                                 <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-                                    This URL will be called to trigger your custom Google Apps Script automation.
+                                    This URL is triggered when you execute the automation.
                                 </p>
                             </div>
                             

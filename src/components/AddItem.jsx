@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, UploadCloud, Loader2 } from 'lucide-react';
 import convertToBase64 from '../utils/convertToBase64';
 
@@ -15,6 +15,23 @@ export default function AddItem({ onAdd }) {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const priceInputRef = useRef(null);
+
+    useEffect(() => {
+        const handleWheel = (e) => {
+            e.preventDefault();
+        };
+        const input = priceInputRef.current;
+        if (input) {
+            input.addEventListener('wheel', handleWheel, { passive: false });
+        }
+        return () => {
+            if (input) {
+                input.removeEventListener('wheel', handleWheel);
+            }
+        };
+    }, []);
 
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -82,6 +99,7 @@ export default function AddItem({ onAdd }) {
                     <div>
                         <label className="block text-sm font-semibold text-slate-600 mb-1">Estimated Cost</label>
                         <input
+                            ref={priceInputRef}
                             type="number"
                             placeholder="0"
                             min="0"

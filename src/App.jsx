@@ -58,36 +58,11 @@ export default function App() {
   }, []);
 
   // -------------------------------------------------
-  // LINE notification helper (unchanged)
-  const sendLineNotification = async (itemData) => {
-    const token = localStorage.getItem('line_notify_token');
-    if (!token) return;
-    try {
-      const message = `\n🌟 New Wishlist Item Added!\n\nName: ${itemData.title}\nCategory: ${itemData.category}\nPrice: ฿${itemData.price.toLocaleString()}`;
-      const proxyUrl = 'https://corsproxy.io/?';
-      const targetUrl = 'https://notify-api.line.me/api/notify';
-      const formData = new URLSearchParams();
-      formData.append('message', message);
-      await fetch(proxyUrl + encodeURIComponent(targetUrl), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      console.log('Line notification sent.');
-    } catch (error) {
-      console.error('Failed to send LINE notification:', error);
-    }
-  };
-
   const handleAdd = async (itemData) => {
     if (!user) return;
     const itemsRef = collection(db, 'artifacts', 'mywishlist-9ba95', 'users', user.uid, 'wishlist');
     await addDoc(itemsRef, { ...itemData, userId: user.uid });
     setActiveTab('list');
-    sendLineNotification(itemData);
   };
 
   // Sign‑out handler

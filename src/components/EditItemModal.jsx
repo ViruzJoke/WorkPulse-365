@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { X, Save, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Save, Image as ImageIcon, UploadCloud } from 'lucide-react';
+import convertToBase64 from '../utils/convertToBase64';
 
 export default function EditItemModal({ item, onClose, onSave }) {
     const [title, setTitle] = useState(item.title || '');
@@ -7,6 +8,40 @@ export default function EditItemModal({ item, onClose, onSave }) {
     const [category, setCategory] = useState(item.category || 'Normal');
     const [imageUrl, setImageUrl] = useState(item.imageUrl || '');
     const [saving, setSaving] = useState(false);
+
+    const priceInputRef = useRef(null);
+
+    useEffect(() => {
+        const handleWheel = (e) => {
+            e.preventDefault();
+        };
+        const input = priceInputRef.current;
+        if (input) {
+            input.addEventListener('wheel', handleWheel, { passive: false });
+        }
+        return () => {
+            if (input) {
+                input.removeEventListener('wheel', handleWheel);
+            }
+        };
+    }, []);
+
+    const handleImageChange = async (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                const base64 = await convertToBase64(file);
+                setImageUrl(base64);
+            } catch (err) {
+                console.error("Error converting image to Base64:", err);
+                alert("Failed to process image. Please try a smaller file.");
+            }
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImageUrl('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -47,12 +82,13 @@ export default function EditItemModal({ item, onClose, onSave }) {
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-1.5">Price (฿)</label>
                             <input
+                                ref={priceInputRef}
                                 type="number"
                                 required
                                 min="0"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-medium"
                             />
                         </div>
                         <div>
@@ -72,15 +108,29 @@ export default function EditItemModal({ item, onClose, onSave }) {
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-2">
                             <ImageIcon size={16} className="text-slate-400"/>
-                            Image URL <span className="text-slate-400 font-normal">(Optional)</span>
+                            Picture <span className="text-slate-400 font-normal">(Optional)</span>
                         </label>
-                        <input
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            placeholder="https://example.com/image.jpg"
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
-                        />
+                        <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative bg-white/30 animate-all">
+                            {imageUrl ? (
+                                <div className="relative inline-block">
+                                    <img src={imageUrl} alt="Preview" className="h-32 object-contain rounded-lg shadow-sm border border-slate-100" />
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveImage}
+                                        className="absolute -top-2 -right-2 bg-white text-slate-400 hover:text-red-500 rounded-full shadow-md p-1 border border-slate-100 transition-colors"
+                                        title="Remove picture"
+                                    >
+                                        <span className="w-5 h-5 flex items-center justify-center font-bold text-xs">✕</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="cursor-pointer flex flex-col items-center justify-center space-y-2 text-slate-500 py-4">
+                                    <UploadCloud size={32} className="text-slate-400" />
+                                    <span className="text-sm font-medium">Click to upload an image</span>
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                                </label>
+                            )}
+                        </div>
                     </div>
 
                     <div className="pt-4">

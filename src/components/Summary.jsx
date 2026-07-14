@@ -44,41 +44,6 @@ export default function Summary({ items }) {
                 <div className="flex flex-col gap-2 mt-4 max-w-xs mx-auto">
                     <button
                         onClick={() => {
-                            const token = localStorage.getItem('line_notify_token');
-                            if (!token) {
-                                alert('LINE token not set in Settings.');
-                                return;
-                            }
-                            const messageLines = items.map(item => `• ${item.title} (${item.category}) – ฿${Number(item.price).toLocaleString()}`);
-                            const message = `🌟 Wishlist Summary\nTotal: ฿${grandTotal.toLocaleString()}\n\n${messageLines.join('\n')}`;
-                            const proxyUrl = 'https://corsproxy.io/?';
-                            const targetUrl = 'https://notify-api.line.me/api/notify';
-                            const formData = new URLSearchParams();
-                            formData.append('message', message);
-                            fetch(proxyUrl + encodeURIComponent(targetUrl), {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                    Authorization: `Bearer ${token}`,
-                                },
-                                body: formData,
-                            })
-                                .then(res => {
-                                    if (!res.ok) throw new Error('Failed to send');
-                                    alert('LINE notification sent!');
-                                })
-                                .catch(err => {
-                                    console.error(err);
-                                    alert('Error sending LINE notification');
-                                });
-                        }}
-                        className="w-full px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
-                    >
-                        Send detail to LINE
-                    </button>
-                    
-                    <button
-                        onClick={() => {
                             const scriptUrl = localStorage.getItem('google_script_url');
                             if (!scriptUrl) {
                                 alert('Google Apps Script URL not set in Settings.');
@@ -92,9 +57,9 @@ export default function Summary({ items }) {
                                     alert('Error triggering Google Apps Script: ' + err.message);
                                 });
                         }}
-                        className="w-full px-4 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-sm"
+                        className="w-full px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
                     >
-                        Trigger Automation
+                        Trigger Google Script
                     </button>
                 </div>
             </div>

@@ -22,7 +22,7 @@ export default function ImageModal({ imageUrl, onClose }) {
         <img
           src={imageUrl}
           alt="Wishlist item"
-          className="max-w-screen-md max-h-screen-md object-contain rounded-lg shadow-lg"
+          className="max-w-[70vw] max-h-[70vh] object-contain rounded-lg shadow-lg"
         />
       </div>
     </div>
