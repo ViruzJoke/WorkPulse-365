@@ -43,6 +43,9 @@ export default function App() {
                 });
 
                 return () => unsubSnapshot();
+            } else {
+                setUser(null);
+                setLoading(false);
             }
         });
 
@@ -113,6 +116,16 @@ export default function App() {
                         <Loader2 className="animate-spin text-brand-500 mb-3" size={36} />
                         <p className="text-slate-500 font-medium tracking-wide">Loading Wishlist...</p>
                     </div>
+                ) : !user ? (
+                    <div className="flex flex-col items-center justify-center p-10 bg-white rounded-2xl shadow-sm border mt-10">
+                        <h2 className="text-xl font-bold mb-6">Welcome</h2>
+                        <button 
+                            onClick={handleGoogleSignIn}
+                            className="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-800 transition"
+                        >
+                            Sign in with Google
+                        </button>
+                    </div>
                 ) : authError ? (
                     <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl shadow-sm">
                         <h3 className="font-bold text-lg">Connection Error</h3>
@@ -152,32 +165,34 @@ export default function App() {
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 pb-safe">
-                <div className="max-w-md mx-auto flex justify-between p-2 px-6">
-                    <button
-                        onClick={() => setActiveTab('list')}
-                        className={`flex flex-col items-center p-2 px-4 rounded-xl transition-all duration-300 ${activeTab === 'list' ? 'text-brand-600 bg-brand-50' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <List size={24} strokeWidth={activeTab === 'list' ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold mt-1 tracking-wider uppercase">List</span>
-                    </button>
+            {user && (
+                <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 pb-safe">
+                    <div className="max-w-md mx-auto flex justify-between p-2 px-6">
+                        <button
+                            onClick={() => setActiveTab('list')}
+                            className={`flex flex-col items-center p-2 px-4 rounded-xl transition-all duration-300 ${activeTab === 'list' ? 'text-brand-600 bg-brand-50' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <List size={24} strokeWidth={activeTab === 'list' ? 2.5 : 2} />
+                            <span className="text-[10px] font-bold mt-1 tracking-wider uppercase">List</span>
+                        </button>
 
-                    <button
-                        onClick={() => setActiveTab('add')}
-                        className={`flex flex-col items-center p-3 px-5 rounded-2xl transition-all duration-300 transform -translate-y-4 shadow-lg ${activeTab === 'add' ? 'bg-brand-600 text-white shadow-brand-500/40' : 'bg-slate-800 text-white hover:bg-slate-700 shadow-slate-500/20'}`}
-                    >
-                        <PlusCircle size={28} strokeWidth={2.5} />
-                    </button>
+                        <button
+                            onClick={() => setActiveTab('add')}
+                            className={`flex flex-col items-center p-3 px-5 rounded-2xl transition-all duration-300 transform -translate-y-4 shadow-lg ${activeTab === 'add' ? 'bg-brand-600 text-white shadow-brand-500/40' : 'bg-slate-800 text-white hover:bg-slate-700 shadow-slate-500/20'}`}
+                        >
+                            <PlusCircle size={28} strokeWidth={2.5} />
+                        </button>
 
-                    <button
-                        onClick={() => setActiveTab('summary')}
-                        className={`flex flex-col items-center p-2 px-4 rounded-xl transition-all duration-300 ${activeTab === 'summary' ? 'text-brand-600 bg-brand-50' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <ChartIcon size={24} strokeWidth={activeTab === 'summary' ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold mt-1 tracking-wider uppercase">Summary</span>
-                    </button>
-                </div>
-            </nav>
+                        <button
+                            onClick={() => setActiveTab('summary')}
+                            className={`flex flex-col items-center p-2 px-4 rounded-xl transition-all duration-300 ${activeTab === 'summary' ? 'text-brand-600 bg-brand-50' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <ChartIcon size={24} strokeWidth={activeTab === 'summary' ? 2.5 : 2} />
+                            <span className="text-[10px] font-bold mt-1 tracking-wider uppercase">Summary</span>
+                        </button>
+                    </div>
+                </nav>
+            )}
         </div>
     );
 }
