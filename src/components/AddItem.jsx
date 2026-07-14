@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, UploadCloud, Loader2 } from 'lucide-react';
-import { storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import convertToBase64 from '../utils/convertToBase64';
 
 const CATEGORIES = [
     { id: 'Need', label: 'Need (High Priority)' },
