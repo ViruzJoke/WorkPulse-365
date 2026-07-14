@@ -101,6 +101,12 @@ export default function App() {
     });
   };
 
+  // Update quick buy threshold in real time
+  const handleThresholdChange = (value) => {
+    setQuickBuyThreshold(value);
+    localStorage.setItem('quick_buy_threshold', value);
+  };
+
   // Undo a purchase (move back to active wishlist)
   const handleRedo = async (id) => {
     if (!user) return;
@@ -115,7 +121,7 @@ export default function App() {
 
       <Header onSettingsClick={() => setShowSettings(true)} user={user} onSignOut={handleSignOut} />
 
-      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} onThresholdChange={handleThresholdChange} />}
 
       <main className="max-w-md mx-auto p-4 relative z-10">
         {loading ? (

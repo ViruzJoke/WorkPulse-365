@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, ArrowLeft } from 'lucide-react';
 
-export default function Settings({ onClose }) {
+export default function Settings({ onClose, onThresholdChange }) {
     const [googleScriptUrl, setGoogleScriptUrl] = useState('');
     const [quickBuyThreshold, setQuickBuyThreshold] = useState('');
     const [showGasUrl, setShowGasUrl] = useState(false);
@@ -56,7 +56,11 @@ export default function Settings({ onClose }) {
                                     placeholder="e.g. 500"
                                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
                                     value={quickBuyThreshold}
-                                    onChange={(e) => setQuickBuyThreshold(e.target.value)}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setQuickBuyThreshold(val);
+                                      if (onThresholdChange) onThresholdChange(val);
+                                    }}
                                 />
                                 <p className="text-xs text-slate-400 mt-2 leading-relaxed">
                                     Items with prices equal to or below this amount can be filtered by toggling the "Quick Buy" filter on your list.
