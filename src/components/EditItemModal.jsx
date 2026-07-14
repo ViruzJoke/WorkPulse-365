@@ -7,6 +7,7 @@ export default function EditItemModal({ item, onClose, onSave }) {
     const [price, setPrice] = useState(item.price || '');
     const [category, setCategory] = useState(item.category || 'Normal');
     const [imageUrl, setImageUrl] = useState(item.imageUrl || '');
+    const [url, setUrl] = useState(item.url || '');
     const [saving, setSaving] = useState(false);
 
     const priceInputRef = useRef(null);
@@ -47,7 +48,7 @@ export default function EditItemModal({ item, onClose, onSave }) {
         e.preventDefault();
         setSaving(true);
         try {
-            await onSave(item.id, { title, price: Number(price), category, imageUrl });
+            await onSave(item.id, { title, price: Number(price), category, imageUrl, url });
             onClose();
         } catch (error) {
             console.error('Error saving item:', error);
@@ -103,6 +104,17 @@ export default function EditItemModal({ item, onClose, onSave }) {
                                 <option value="Want">Want (Maybe later)</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Item URL (Optional)</label>
+                        <input
+                            type="url"
+                            placeholder="https://example.com/product/..."
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm font-medium"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                        />
                     </div>
 
                     <div>

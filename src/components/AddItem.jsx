@@ -12,6 +12,7 @@ export default function AddItem({ onAdd }) {
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
     const [category, setCategory] = useState('Normal');
+    const [url, setUrl] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -64,6 +65,7 @@ export default function AddItem({ onAdd }) {
             price: Number(price),
             category,
             imageUrl,
+            url,
             date: new Date().toISOString(),
             createdAt: new Date(),
         });
@@ -72,6 +74,7 @@ export default function AddItem({ onAdd }) {
         setTitle('');
         setPrice('');
         setCategory('Normal');
+        setUrl('');
         setImageFile(null);
         setImagePreview(null);
     };
@@ -122,6 +125,17 @@ export default function AddItem({ onAdd }) {
                             ))}
                         </select>
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-semibold text-slate-600 mb-1">Item URL (Optional)</label>
+                    <input
+                        type="url"
+                        placeholder="https://example.com/product/..."
+                        className="w-full p-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all font-medium"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                    />
                 </div>
 
                 <div>

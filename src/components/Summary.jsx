@@ -68,27 +68,6 @@ export default function Summary({ items }) {
                 <h2 className="text-5xl font-black text-slate-800 tracking-tight relative z-10">
                     ฿{grandTotal.toLocaleString()}
                 </h2>
-                <div className="flex flex-col gap-2 mt-4 max-w-xs mx-auto">
-                    <button
-                        onClick={() => {
-                            const scriptUrl = localStorage.getItem('google_script_url');
-                            if (!scriptUrl) {
-                                alert('Google Apps Script URL not set in Settings.');
-                                return;
-                            }
-                            fetch(scriptUrl, { method: 'GET' })
-                                .then(res => res.text())
-                                .then(text => alert('Automation Triggered! Response: ' + text))
-                                .catch(err => {
-                                    console.error(err);
-                                    alert('Error triggering Google Apps Script: ' + err.message);
-                                });
-                        }}
-                        className="w-full px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors shadow-sm"
-                    >
-                        Trigger Google Script
-                    </button>
-                </div>
             </div>
 
             {chartData.length > 0 ? (
@@ -153,6 +132,29 @@ export default function Summary({ items }) {
                     </div>
                 </div>
             )}
+
+            {/* Send Notification Trigger (GAS) */}
+            <div className="pt-4 flex justify-center">
+                <button
+                    onClick={() => {
+                        const scriptUrl = localStorage.getItem('google_script_url');
+                        if (!scriptUrl) {
+                            alert('Google Apps Script URL not set in Settings.');
+                            return;
+                        }
+                        fetch(scriptUrl, { method: 'GET' })
+                            .then(res => res.text())
+                            .then(text => alert('Notification Sent! Response: ' + text))
+                            .catch(err => {
+                                console.error(err);
+                                alert('Error triggering Google Apps Script: ' + err.message);
+                            });
+                    }}
+                    className="w-full max-w-xs px-5 py-3.5 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-md shadow-brand-500/25"
+                >
+                    Send Notification Now
+                </button>
+            </div>
         </div>
     );
 }

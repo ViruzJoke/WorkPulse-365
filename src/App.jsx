@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [quickBuyThreshold, setQuickBuyThreshold] = useState('');
 
   // ---------- Google Sign‑In ----------
   const handleGoogleSignIn = async () => {
@@ -54,6 +55,9 @@ export default function App() {
         setLoading(false);
       }
     });
+    // Load quick buy threshold from localStorage once on mount
+    const storedThreshold = localStorage.getItem('quick_buy_threshold');
+    if (storedThreshold) setQuickBuyThreshold(storedThreshold);
     return () => unsubscribe();
   }, []);
 
@@ -95,6 +99,13 @@ export default function App() {
       bought: true,
       boughtDate: todayStr
     });
+  };
+
+  // Undo a purchase (move back to active wishlist)
+  const handleRedo = async (id) => {
+    if (!user) return;
+    const itemRef = doc(db, 'artifacts', 'mywishlist-9ba95', 'users', user.uid, 'wishlist', id);
+    await updateDoc(itemRef, { bought: false, boughtDate: null });
   };
 
   return (
@@ -149,10 +160,12 @@ export default function App() {
                   </span>
                 </div>
                 <Wishlist 
-                  items={items.filter(item => !item.bought)} 
+                  items={items} 
                   onDelete={handleDelete} 
                   onEdit={handleEdit} 
                   onArchive={handleArchive}
+                  onRedo={handleRedo}
+                  quickBuyThreshold={quickBuyThreshold}
                 />
               </div>
             )}
