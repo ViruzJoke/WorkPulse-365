@@ -5,12 +5,12 @@ import { getStorage } from "firebase/storage";
 
 // TODO: Replace with your actual Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDeKCmhY0NN2VA0yHqQS9Jr4lBIi5AAJg4",
-    authDomain: "workpulse-365.firebaseapp.com",
-    projectId: "workpulse-365",
-    storageBucket: "workpulse-365.firebasestorage.app",
-    messagingSenderId: "289186802306",
-    appId: "1:289186802306:web:b3005140e698c35e01629b"
+    apiKey: "AIzaSyCArBr_lDqFw1NrmemkuFty-8HCDq9CDbQ",
+    authDomain: "mywishlist-9ba95.firebaseapp.com",
+    projectId: "mywishlist-9ba95",
+    storageBucket: "mywishlist-9ba95.firebasestorage.app",
+    messagingSenderId: "59691161836",
+    appId: "1:59691161836:web:4cb2a65878d4720bf62dc9"
 };
 
 let app;
