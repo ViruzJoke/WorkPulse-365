@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Image as ImageIcon, Check } from 'lucide-react';
 import ImageModal from './ImageModal';
 import EditItemModal from './EditItemModal';
 
@@ -9,7 +9,7 @@ const CATEGORY_STYLES = {
     'Want': 'text-slate-600 bg-slate-100 border-slate-200'
 };
 
-export default function Wishlist({ items, onDelete, onEdit }) {
+export default function Wishlist({ items, onDelete, onEdit, onArchive }) {
     const [selectedItem, setSelectedItem] = useState(null);
     const [viewMode, setViewMode] = useState(null); // 'image' or 'edit'
 
@@ -65,13 +65,22 @@ export default function Wishlist({ items, onDelete, onEdit }) {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => onDelete(item.id)}
-                        className="p-2.5 text-slate-300 hover:text-white hover:bg-red-500 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm shadow-red-500/0 hover:shadow-red-500/30"
-                        title="Delete item"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    <div className="flex gap-1.5">
+                        <button
+                            onClick={() => onArchive(item.id)}
+                            className="p-2.5 text-slate-300 hover:text-white hover:bg-emerald-500 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm shadow-emerald-500/0 hover:shadow-emerald-500/30"
+                            title="Mark as bought"
+                        >
+                            <Check size={18} />
+                        </button>
+                        <button
+                            onClick={() => onDelete(item.id)}
+                            className="p-2.5 text-slate-300 hover:text-white hover:bg-red-500 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm shadow-red-500/0 hover:shadow-red-500/30"
+                            title="Delete item"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
                 </div>
             ))}
 

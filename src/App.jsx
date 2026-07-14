@@ -87,6 +87,16 @@ export default function App() {
     await updateDoc(itemRef, updatedData);
   };
 
+  const handleArchive = async (id) => {
+    if (!user) return;
+    const itemRef = doc(db, 'artifacts', 'mywishlist-9ba95', 'users', user.uid, 'wishlist', id);
+    const todayStr = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    await updateDoc(itemRef, {
+      bought: true,
+      boughtDate: todayStr
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 relative overflow-hidden">
       {/* Background Decorations */}
@@ -106,7 +116,7 @@ export default function App() {
           <div className="flex flex-col items-center justify-center py-20">
             <button
               onClick={handleGoogleSignIn}
-              className="flex items-center gap-2 bg-brand-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-brand-700 transition-colors"
+              className="flex items-center gap-2 bg-brand-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-brand-700 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none">
                 <path fill="#EA4335" d="M24 9.5c3.45 0 6.57 1.18 9 3.13l6.73-6.73C36.88 2.68 30.78 0 24 0 14.62 0 6.55 5.12 2.42 12.5l7.9 6.13C12.73 13.71 17.92 9.5 24 9.5z"/>
@@ -135,10 +145,15 @@ export default function App() {
                 <div className="flex items-center justify-between mb-4 px-2">
                   <h2 className="text-xl font-bold text-slate-800">My Items</h2>
                   <span className="text-sm font-semibold bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100 text-slate-500">
-                    {items.length} total
+                    {items.filter(item => !item.bought).length} total
                   </span>
                 </div>
-                <Wishlist items={items} onDelete={handleDelete} onEdit={handleEdit} />
+                <Wishlist 
+                  items={items.filter(item => !item.bought)} 
+                  onDelete={handleDelete} 
+                  onEdit={handleEdit} 
+                  onArchive={handleArchive}
+                />
               </div>
             )}
             {activeTab === 'summary' && (

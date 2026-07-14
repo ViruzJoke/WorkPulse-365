@@ -8,10 +8,12 @@ const COLORS = {
 };
 
 export default function Summary({ items }) {
+    const activeItems = useMemo(() => items.filter(i => !i.bought), [items]);
+
     const { chartData, totals, grandTotal } = useMemo(() => {
         const catTotals = { Need: 0, Normal: 0, Want: 0 };
         
-        items.forEach(item => {
+        activeItems.forEach(item => {
             const price = Number(item.price) || 0;
             if (catTotals[item.category] !== undefined) {
                 catTotals[item.category] += price;
@@ -29,6 +31,31 @@ export default function Summary({ items }) {
         const total = data.reduce((sum, d) => sum + d.value, 0);
 
         return { chartData: data, totals: catTotals, grandTotal: total };
+    }, [activeItems]);
+
+    const monthlyStats = useMemo(() => {
+        const stats = {}; // key: "YYYY-MM", value: sum
+        const bought = items.filter(i => i.bought && i.boughtDate);
+        bought.forEach(item => {
+            const [year, monthStr] = item.boughtDate.split('-');
+            const key = `${year}-${monthStr}`;
+            const price = Number(item.price) || 0;
+            stats[key] = (stats[key] || 0) + price;
+        });
+        
+        // Sort keys descending ("2026-07" before "2026-06")
+        const sortedKeys = Object.keys(stats).sort().reverse();
+        
+        return sortedKeys.map(key => {
+            const [year, monthStr] = key.split('-');
+            const monthIndex = parseInt(monthStr, 10) - 1;
+            const date = new Date(year, monthIndex, 1);
+            const formattedLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            return {
+                label: formattedLabel,
+                amount: stats[key]
+            };
+        });
     }, [items]);
 
     return (
@@ -106,7 +133,24 @@ export default function Summary({ items }) {
                 </div>
             ) : (
                 <div className="text-center p-10 text-slate-400 glass-panel rounded-3xl border border-dashed border-slate-300">
-                    No data to summarize yet.
+                    No active wishes to summarize yet.
+                </div>
+            )}
+
+            {monthlyStats.length > 0 && (
+                <div className="glass-panel rounded-3xl p-6">
+                    <h3 className="font-bold text-slate-800 mb-6 text-lg">Purchase History</h3>
+                    <div className="space-y-3">
+                        {monthlyStats.map(stat => (
+                            <div key={stat.label} className="flex justify-between items-center p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100/60 shadow-sm transition-all hover:shadow-md">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-sm animate-pulse"></div>
+                                    <span className="font-bold text-slate-700">{stat.label}</span>
+                                </div>
+                                <span className="font-black text-emerald-700 text-lg">฿{stat.amount.toLocaleString()}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
