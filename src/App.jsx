@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import Header from './components/Header';
 import AddItem from './components/AddItem';
 import Wishlist from './components/Wishlist';

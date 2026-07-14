@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
+import ImageModal from './ImageModal';
+import EditItemModal from './EditItemModal';
 
 const CATEGORY_STYLES = {
     'Need': 'text-accent-600 bg-accent-50 border-accent-200',
@@ -7,7 +9,24 @@ const CATEGORY_STYLES = {
     'Want': 'text-slate-600 bg-slate-100 border-slate-200'
 };
 
-export default function Wishlist({ items, onDelete }) {
+export default function Wishlist({ items, onDelete, onEdit }) {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [viewMode, setViewMode] = useState(null); // 'image' or 'edit'
+
+  const handleImageClick = (item) => {
+    setSelectedItem(item);
+    setViewMode('image');
+  };
+
+  const handleTitleClick = (item) => {
+    setSelectedItem(item);
+    setViewMode('edit');
+  };
+
+  const closeModal = () => {
+    setSelectedItem(null);
+    setViewMode(null);
+  };
     if (items.length === 0) {
         return (
             <div className="text-center p-10 text-slate-400 glass-panel rounded-2xl border border-dashed border-slate-300">
@@ -22,7 +41,7 @@ export default function Wishlist({ items, onDelete }) {
         <div className="space-y-4 pb-10">
             {items.map(item => (
                 <div key={item.id} className="glass-panel rounded-2xl p-4 shadow-glass-sm flex gap-4 items-center group transition-all hover:-translate-y-1 hover:shadow-glass">
-                    <div className="w-20 h-20 rounded-xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-200/50 shadow-inner">
+                    <div className="w-20 h-20 rounded-xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-200/50 shadow-inner" onClick={() => handleImageClick(item)} style={{ cursor: 'pointer' }}>
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
@@ -33,7 +52,9 @@ export default function Wishlist({ items, onDelete }) {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                             <div>
-                                <h3 className="font-bold text-slate-800 text-lg truncate leading-tight mb-1">{item.title}</h3>
+                                <h3 className="font-bold text-slate-800 text-lg truncate leading-tight mb-1" onClick={() => handleTitleClick(item)} style={{ cursor: 'pointer' }}>
+                                    {item.title}
+                                </h3>
                                 <div className="text-brand-600 font-black text-base">
                                     ฿{Number(item.price).toLocaleString()}
                                 </div>
@@ -53,6 +74,14 @@ export default function Wishlist({ items, onDelete }) {
                     </button>
                 </div>
             ))}
+
+            {selectedItem && viewMode === 'image' && (
+                <ImageModal imageUrl={selectedItem.imageUrl} onClose={closeModal} />
+            )}
+
+            {selectedItem && viewMode === 'edit' && (
+                <EditItemModal item={selectedItem} onClose={closeModal} />
+            )}
         </div>
     );
 }
